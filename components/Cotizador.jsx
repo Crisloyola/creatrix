@@ -38,7 +38,7 @@ function calcCosto(it) {
   switch (it.tipo) {
     case 'banner': {
       const c = COSTOS.banner[it.mat] ?? 0;
-      return rollW(it.ancho) * rollH(it.alto) * c * +it.cantidad;
+      return rollW(it.ancho) * rollH(it.alto) * c * +it.cantidad + (it.precioTubo || 0) * +it.cantidad;
     }
     case 'vinil': {
       const c = COSTOS.vinil[it.mat] ?? 0;
@@ -59,8 +59,10 @@ function calcCosto(it) {
 // ── Cálculo de subtotal por tipo de producto ────────────────────────────────
 function calcSub(it) {
   switch (it.tipo) {
-    case "banner":
-      return rollW(it.ancho) * rollH(it.alto) * it.precio * +it.cantidad;
+    case "banner": {
+      const precioBase = it.bastidor ? (it.precioBastidor || it.precio * 2) : it.precio;
+      return rollW(it.ancho) * rollH(it.alto) * precioBase * +it.cantidad + (it.precioTubo || 0) * +it.cantidad;
+    }
 
     case "vinil":
       return +it.metros * (it.precio + it.precioBase) * +it.cantidad;
@@ -122,7 +124,9 @@ function initItem(prod) {
     case "banner":
       return { ...b, ancho: 1, alto: 1, rollos: prod.rollos,
                mat: prod.mats[0].nombre, precio: prod.mats[0].precio, mats: prod.mats,
-               acabado: prod.acabados[0] || "", acabados: prod.acabados };
+               acabado: prod.acabados[0] || "", acabados: prod.acabados,
+               tubo: "sin", precioTubo: 0,
+               bastidor: false, precioBastidor: prod.mats[0].precio * 2 };
     case "vinil":
       return { ...b, anchoFijo: prod.anchoFijo, metros: 1,
                mat: prod.mats[0].nombre, precio: prod.mats[0].precio, mats: prod.mats,
@@ -159,8 +163,13 @@ function initItem(prod) {
 function forSave(it) {
   const sub = calcSub(it);
   switch (it.tipo) {
-    case "banner":
-      return { ...it, sub, unidad: "m²", medidas: true, ancho: rollW(it.ancho), alto: rollH(it.alto) };
+    case "banner": {
+      const precioEfectivo = it.bastidor ? (it.precioBastidor || it.precio * 2) : it.precio;
+      const notaExtra = [it.tubo !== "sin" ? `Tubo ${it.tubo}` : "", it.bastidor ? "Bastidor de madera" : ""].filter(Boolean).join(", ");
+      return { ...it, sub, unidad: "m²", medidas: true, ancho: rollW(it.ancho), alto: rollH(it.alto),
+               precio: precioEfectivo,
+               nota: [it.nota, notaExtra].filter(Boolean).join(" · ") };
+    }
     case "vinil":
       return { ...it, sub, unidad: "m lineal", medidas: false,
                mat: it.mat + (it.base !== "Sin base" ? ` + ${it.base}` : ""),
@@ -191,6 +200,12 @@ function forSave(it) {
 }
 
 // ── Campos del formulario por tipo ──────────────────────────────────────────
+const TUBOS_OPT = [
+  { id: "sin", lbl: "Sin tubo",  precio: 0 },
+  { id: "1m",  lbl: "Tubo 1m",  precio: 5 },
+  { id: "1.5m",lbl: "Tubo 1.5m",precio: 10 },
+];
+
 function CamposBanner({ item, upd, updM }) {
   const aw = rollW(item.ancho), ah = rollH(item.alto);
   return (
@@ -201,11 +216,44 @@ function CamposBanner({ item, upd, updM }) {
           {item.mats.map(m => (
             <div key={m.nombre} className={`mc${item.mat === m.nombre ? " on" : ""}`}
               style={{ flex: 1, minWidth: 140 }}
-              onClick={() => updM(item.key, { mat: m.nombre, precio: m.precio })}>
+              onClick={() => updM(item.key, { mat: m.nombre, precio: m.precio, precioBastidor: m.precio * 2 })}>
               <div className="mc-l" style={{ fontWeight: 600 }}>{m.nombre}</div>
               <div style={{ fontSize: ".65rem", color: "var(--cyan)", fontFamily: "var(--m)", marginTop: 2 }}>{fM(m.precio)}/m²</div>
             </div>
           ))}
+        </div>
+      </div>
+      <div className="fg">
+        <label className="lb">Tubo</label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {TUBOS_OPT.map(t => (
+            <div key={t.id} className={`mc${item.tubo === t.id ? " on" : ""}`}
+              style={{ flex: 1, minWidth: 90 }}
+              onClick={() => updM(item.key, { tubo: t.id, precioTubo: t.precio })}>
+              <div className="mc-l" style={{ fontWeight: 600 }}>{t.lbl}</div>
+              {t.precio > 0 && <div style={{ fontSize: ".65rem", color: "var(--ye)", fontFamily: "var(--m)", marginTop: 2 }}>+{fM(t.precio)}/und</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="fg">
+        <label className="lb">Bastidor de madera</label>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <div className={`mc${item.bastidor ? " on" : ""}`}
+            style={{ flex: "0 0 auto", minWidth: 140 }}
+            onClick={() => upd(item.key, "bastidor", !item.bastidor)}>
+            <div className="mc-l" style={{ fontWeight: 600 }}>{item.bastidor ? "✓ Con bastidor" : "Sin bastidor"}</div>
+            {!item.bastidor && <div style={{ fontSize: ".65rem", color: "var(--t3)", marginTop: 2 }}>duplica precio/m²</div>}
+          </div>
+          {item.bastidor && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <input className="inp inpsm" type="number" min={0} step={0.5}
+                value={item.precioBastidor}
+                onChange={e => upd(item.key, "precioBastidor", parseFloat(e.target.value) || 0)}
+                style={{ maxWidth: 120 }} />
+              <div className="fxs td">Precio/m² con bastidor</div>
+            </div>
+          )}
         </div>
       </div>
       <div className="fr fr4" style={{ gap: 10 }}>
@@ -592,7 +640,9 @@ function ResumenPrecio({ item }) {
   switch (item.tipo) {
     case "banner": {
       const aw = rollW(item.ancho), ah = rollH(item.alto);
-      return <><span className="td fxs">{aw}m × {ah}m × {item.cantidad} × {fM(item.precio)}/m² = </span>{fM(sub)}</>;
+      const precioBase = item.bastidor ? (item.precioBastidor || item.precio * 2) : item.precio;
+      const tuboTxt = item.precioTubo > 0 ? ` + tubo ${fM(item.precioTubo)}×${item.cantidad}` : "";
+      return <><span className="td fxs">{aw}m × {ah}m × {item.cantidad} × {fM(precioBase)}/m²{tuboTxt} = </span>{fM(sub)}</>;
     }
     case "vinil":
       return <><span className="td fxs">{item.metros}m × {item.cantidad} × {fM(item.precio + item.precioBase)}/m = </span>{fM(sub)}</>;

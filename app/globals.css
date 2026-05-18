@@ -43,7 +43,7 @@
   --sh: 0 8px 40px rgba(0,0,0,.6);
 }
 
-html { scroll-behavior: smooth }
+html { scroll-behavior: smooth; font-size: 17px }
 body { background:var(--bg); color:var(--t); font-family:var(--f); min-height:100vh; -webkit-font-smoothing:antialiased }
 input,select,textarea,button { font-family:var(--f) }
 button { cursor:pointer; border:none; background:none }
@@ -384,4 +384,100 @@ tbody tr:hover td { background:rgba(0,229,204,.02) }
 
   /* Botón cerrar sesión más compacto */
   .sb-ft .btn { font-size:.72rem; padding:7px 12px }
+
+  [data-theme="light"] .sb { box-shadow:4px 0 30px rgba(0,0,0,.18) }
 }
+
+/* ══════════════════════════════════════════
+   LIGHT THEME
+══════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:      #f5f3ff;
+  --bg1:     #edeaf8;
+  --bg2:     #e6e2f5;
+  --bg3:     #d9d4ec;
+  --card:    #ffffff;
+  --card2:   #f8f6ff;
+  --border:  #cdc8e6;
+  --border2: #b3acd8;
+
+  /* Colores acento oscurecidos para contraste sobre fondo claro */
+  --cyan:  #007a72;
+  --cyan2: #006560;
+  --mag:   #a800cc;
+  --mag2:  #8800aa;
+  --pur:   #6225d0;
+  --pur2:  #5118b8;
+  --gr:    #0a8060;
+  --re:    #cc1a3a;
+  --ye:    #8a6200;
+  --bl:    #0069a0;
+
+  --cyan-d:  rgba(0,122,114,.13);
+  --cyan-d2: rgba(0,122,114,.07);
+  --mag-d:   rgba(168,0,204,.1);
+  --pur-d:   rgba(98,37,208,.1);
+  --gr-d:    rgba(10,128,96,.11);
+  --re-d:    rgba(204,26,58,.1);
+  --ye-d:    rgba(138,98,0,.1);
+  --bl-d:    rgba(0,105,160,.1);
+
+  --t:  #17122f;
+  --t2: #48407a;
+  --t3: #7d76a8;
+
+  --sh: 0 8px 40px rgba(0,0,0,.08);
+}
+
+[data-theme="light"] body { background:var(--bg); color:var(--t) }
+
+/* Overlay y backdrop */
+[data-theme="light"] .ov          { background:rgba(70,55,130,.45) }
+[data-theme="light"] .sb-backdrop { background:rgba(70,55,130,.35) }
+
+/* Tabla hover */
+[data-theme="light"] tbody tr:hover td { background:rgba(0,200,180,.05) }
+
+/* Product card shadow */
+[data-theme="light"] .pc:hover { box-shadow:0 10px 30px rgba(0,0,0,.1) }
+
+/* Total en items de cotización */
+[data-theme="light"] .ci-sp { color:var(--t) }
+
+/* Scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-track { background:var(--bg1) }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background:var(--border2) }
+
+/* Login background gradients */
+[data-theme="light"] .l-bg {
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0,200,180,.09) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 20%, rgba(180,0,220,.09) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 60% 80%, rgba(100,50,200,.07) 0%, transparent 60%)
+}
+
+/* Header móvil */
+[data-theme="light"] .mob-hd { background:var(--bg1) }
+
+/* Input focus — ajustar glow al nuevo cyan oscuro */
+[data-theme="light"] .inp:focus { border-color:var(--cyan); box-shadow:0 0 0 3px rgba(0,122,114,.12) }
+
+/* Sidebar item activo — borde izquierdo y glow */
+[data-theme="light"] .sb-item.on { color:var(--cyan); background:linear-gradient(90deg, rgba(0,122,114,.12), transparent); box-shadow:inset 3px 0 0 var(--cyan) }
+
+/* Botón IGV activo */
+[data-theme="light"] .igvb.on { box-shadow:0 2px 10px rgba(0,122,114,.2) }
+
+/* Código tag */
+[data-theme="light"] .code { background:rgba(0,122,114,.1); color:var(--cyan); border-color:rgba(0,122,114,.18) }
+
+/* Catalog card price */
+[data-theme="light"] .cpc-p { color:var(--cyan) }
+[data-theme="light"] .cpc-bx { background:rgba(0,122,114,.1); color:var(--cyan); border-color:rgba(0,122,114,.18) }
+
+/* Neon glows ajustados */
+[data-theme="light"] .neon-cyan { box-shadow:0 0 14px rgba(0,122,114,.12) }
+[data-theme="light"] .neon-mag  { box-shadow:0 0 14px rgba(168,0,204,.1) }
+
+/* PDF grand total border */
+[data-theme="light"] .pdf-gd { border-top-color:var(--cyan); color:var(--cyan) }

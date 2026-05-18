@@ -17,6 +17,17 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [pag, setPag] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [tema, setTema] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("tema") || "dark";
+    return "dark";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", tema);
+    localStorage.setItem("tema", tema);
+  }, [tema]);
+
+  const toggleTema = () => setTema(t => t === "dark" ? "light" : "dark");
   const [pedidos, setPedidos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [catalogo, setCatalogo] = useState(CATALOGO);
@@ -77,7 +88,7 @@ export default function App() {
     </div>
   );
 
-  if (!session) return <Login onLogin={setSession}/>;
+  if (!session) return <Login onLogin={setSession} tema={tema} toggleTema={toggleTema}/>;
 
   const nombre = session.user?.user_metadata?.nombre || session.user?.email || "Usuario";
   const rol    = session.user?.user_metadata?.rol    || "vendedor";
@@ -140,7 +151,7 @@ export default function App() {
 
       <aside className={`sb${menuOpen?" open":""}`}>
         <div className="sb-logo">
-          <img src="/logo.png" alt="Logo" style={{height:44,objectFit:"contain",display:"block",margin:"0 auto 6px"}}/>
+          <img src={tema === "light" ? "/logooscuro.png" : "/logo.png"} alt="Logo" style={{height:44,objectFit:"contain",display:"block",margin:"0 auto 6px"}}/>
           <div className="sb-tagline" style={{textAlign:"center"}}>{tienda === "tienda3" ? "Tienda 3" : tienda === "tienda2" ? "Tienda 2" : "Tienda 1"}</div>
         </div>
 
@@ -166,6 +177,11 @@ export default function App() {
               <div className="sb-un">{nombre}</div>
               <div className="sb-ur">{rol}</div>
             </div>
+          </div>
+          <div style={{display:"flex",gap:7,marginBottom:7}}>
+            <button className="btn bg bsm" style={{flex:1,justifyContent:"center"}} onClick={toggleTema}>
+              {tema === "dark" ? "☀ Claro" : "◑ Oscuro"}
+            </button>
           </div>
           <button className="btn bg bsm" style={{width:"100%",justifyContent:"center"}} onClick={logout}>
             ⎋ Cerrar sesión

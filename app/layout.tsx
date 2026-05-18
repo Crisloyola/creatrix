@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Creatrix — Sistema de Control de Ventas",
   description: "Sistema de gestión para Creatrix Diseño & Publicidad",
+  icons: { icon: "/icono.png" },
 };
 
 export default function RootLayout({

@@ -619,12 +619,20 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
     if (!cliente.trim()) { alert("Ingresa el nombre del cliente"); return; }
     if (!items.length)   { alert("Agrega al menos un producto"); return; }
     setGuardando(true);
+
+    const tid = tienda || 'tienda1';
+    const { count } = await supabase
+      .from('pedidos')
+      .select('*', { count: 'exact', head: true })
+      .eq('tienda_id', tid);
+    const codigo = `CTX-${String((count || 0) + 1).padStart(5, '0')}`;
+
     const ped = {
-      codigo: genC(), cliente: cliente.trim(), tel,
+      codigo, cliente: cliente.trim(), tel,
       items: items.map(forSave),
       subtotal, igv: igvMonto, total, con_igv: igv,
       estado: "PENDIENTE", fecha: new Date().toISOString(),
-      tienda_id: tienda || 'tienda1',
+      tienda_id: tid,
     };
     const { data, error } = await supabase.from('pedidos').insert(ped).select().single();
     setGuardando(false);

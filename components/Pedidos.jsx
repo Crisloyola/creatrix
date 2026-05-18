@@ -2,12 +2,18 @@
 
 import { useState } from "react";
 import { fM, fD } from "@/lib/utils";
+
 import { supabase } from "@/lib/supabase";
 import ModalPago from "./ModalPago";
 import ModalPdf from "./ModalPdf";
 import ModalDetalle from "./ModalDetalle";
 
-export default function Pedidos({pedidos,setPedidos,pagos,setPagos}){
+const wa = (p) => {
+  const txt = `◈ *CREATRIX — Pedido*\n\n👤 Cliente: ${p.cliente}\n🔖 Código: ${p.codigo}\n\n${(p.items||[]).map(i=>`• ${i.nombre}${i.medidas?` (${i.ancho}×${i.alto}m)`:""} ×${i.cantidad}: ${fM(i.sub)}`).join("\n")}\n\n${p.con_igv?`Subtotal: ${fM(p.subtotal)}\nIGV 18%: ${fM(p.igv)}\n`:""}_TOTAL: *${fM(p.total)}*_\n\nEstado: ${p.estado==="PENDIENTE"?"🔴":"🟢"} ${p.estado}`;
+  window.open(`https://wa.me/${(p.tel||"").replace(/\D/g,"")}?text=${encodeURIComponent(txt)}`,"_blank");
+};
+
+export default function Pedidos({pedidos,setPedidos,pagos,setPagos,rol}){
   const [busq,setBusq]=useState("");
   const [fil,setFil]=useState("TODOS");
   const [pagoMd,setPagoMd]=useState(null);
@@ -74,9 +80,10 @@ export default function Pedidos({pedidos,setPedidos,pagos,setPagos}){
                     <div className="ta">
                       <button className="btn bb bsm" onClick={()=>setDetMd(p)}>👁</button>
                       <button className="btn by bsm" onClick={()=>setPagoMd(p)}>💳</button>
-                      <button className="btn bg bsm"  onClick={()=>setPdfMd(p)}>🖨️</button>
+                      <button className="btn bg bsm" onClick={()=>setPdfMd(p)}>🖨️</button>
+                      {p.tel&&<button className="btn bs bsm" onClick={()=>wa(p)}>📲</button>}
                       {p.estado==="PENDIENTE"&&<button className="btn bs bsm" onClick={()=>cancelar(p.id)}>✅</button>}
-                      <button className="btn bd bsm" onClick={()=>eliminar(p.id)}>🗑</button>
+                      {rol==="admin"&&<button className="btn bd bsm" onClick={()=>eliminar(p.id)}>🗑</button>}
                     </div>
                   </td>
                 </tr>

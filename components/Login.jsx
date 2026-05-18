@@ -32,8 +32,7 @@ export default function Login({ onLogin }) {
         <div className="l-glow-top"/>
         <div className="lh">
           <div className="l-logo">
-            <div className="l-hex"><div className="l-hex-icon">◈</div></div>
-            <div className="l-brand">creatrix</div>
+            <img src="/logo.png" alt="Logo" style={{height:64,objectFit:"contain"}}/>
           </div>
           <div className="lt">Sistema de Control de Ventas</div>
         </div>

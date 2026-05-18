@@ -593,7 +593,7 @@ function ResumenPrecio({ item }) {
 }
 
 // ── Componente principal ─────────────────────────────────────────────────────
-export default function Cotizador({ catalogo, pedidos, setPedidos, setPag }) {
+export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tienda }) {
   const [cliente, setCliente] = useState("");
   const [tel, setTel] = useState("");
   const [items, setItems] = useState([]);
@@ -606,7 +606,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag }) {
   const cats = ["Todos", ...new Set(catalogo.map(c => c.cat))];
   const prods = catalogo.filter(p => catAct === "Todos" || p.cat === catAct);
 
-  const add  = (prod) => setItems(prev => [...prev, initItem(prod)]);
+  const add  = (prod) => setItems(prev => [initItem(prod), ...prev]);
   const upd  = (key, f, v) => setItems(prev => prev.map(i => i.key === key ? { ...i, [f]: v } : i));
   const updM = (key, obj) => setItems(prev => prev.map(i => i.key === key ? { ...i, ...obj } : i));
   const rem  = (key) => setItems(prev => prev.filter(i => i.key !== key));
@@ -624,6 +624,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag }) {
       items: items.map(forSave),
       subtotal, igv: igvMonto, total, con_igv: igv,
       estado: "PENDIENTE", fecha: new Date().toISOString(),
+      tienda_id: tienda || 'tienda1',
     };
     const { data, error } = await supabase.from('pedidos').insert(ped).select().single();
     setGuardando(false);

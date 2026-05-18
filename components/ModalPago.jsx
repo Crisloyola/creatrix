@@ -17,7 +17,7 @@ export default function ModalPago({pedido,pagos,setPagos,onClose}){
     if(!m||m<=0){alert("Monto inválido");return;}
     if(m>sd+0.01){alert(`Excede el saldo (${fM(sd)})`);return;}
     setRegistrando(true);
-    const pago={pedido_id:pedido.id,pedido_codigo:pedido.codigo,cliente:pedido.cliente,monto:m,metodo:met,nota:nota.trim(),fecha:new Date().toISOString()};
+    const pago={pedido_id:pedido.id,pedido_codigo:pedido.codigo,cliente:pedido.cliente,monto:m,metodo:met,nota:nota.trim(),fecha:new Date().toISOString(),tienda_id:pedido.tienda_id};
     const{data,error}=await supabase.from('pagos').insert(pago).select().single();
     setRegistrando(false);
     if(error){alert("Error al registrar: "+error.message);return;}

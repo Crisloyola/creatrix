@@ -214,7 +214,7 @@ tbody tr:hover td { background:rgba(0,229,204,.02) }
 .ci:hover { border-color:var(--border2) }
 .ci-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px }
 .ci-n  { font-weight:600; font-size:.85rem; display:flex; align-items:center; gap:7px }
-.ci-sp { font-family:var(--m); font-size:.88rem; font-weight:700; text-align:right; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); background:linear-gradient(90deg, var(--cyan), #a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.ci-sp { font-family:var(--m); font-size:.88rem; font-weight:700; text-align:right; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); color:#fff }
 
 .ctb { background:linear-gradient(135deg, rgba(0,229,204,.06), rgba(124,58,237,.04)); border:1.5px solid rgba(0,229,204,.2); border-radius:12px; padding:16px 18px }
 

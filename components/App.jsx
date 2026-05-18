@@ -19,32 +19,36 @@ export default function App() {
   const [pedidos, setPedidos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [catalogo, setCatalogo] = useState(CATALOGO);
+  const [productosCustom, setProductosCustom] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) cargarDatos();
+      if (session) cargarDatos(session);
       else setCargando(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setSession(session);
-      if (session) cargarDatos();
+      if (session) cargarDatos(session);
       else { setPedidos([]); setPagos([]); setCargando(false); }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  async function cargarDatos() {
+  async function cargarDatos(sess) {
     setCargando(true);
-    const [{ data: peds }, { data: pays }] = await Promise.all([
-      supabase.from('pedidos').select('*').order('fecha', { ascending: false }),
-      supabase.from('pagos').select('*').order('fecha', { ascending: true }),
+    const tienda = sess?.user?.user_metadata?.tienda || 'tienda1';
+    const [{ data: peds }, { data: pays }, { data: prods }] = await Promise.all([
+      supabase.from('pedidos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: false }),
+      supabase.from('pagos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: true }),
+      supabase.from('productos_custom').select('*').eq('tienda_id', tienda).order('created_at', { ascending: true }),
     ]);
-    if (peds) setPedidos(peds);
-    if (pays) setPagos(pays);
+    if (peds)  setPedidos(peds);
+    if (pays)  setPagos(pays);
+    if (prods) setProductosCustom(prods);
     setCargando(false);
   }
 
@@ -67,50 +71,67 @@ export default function App() {
   if (!session) return <Login onLogin={setSession}/>;
 
   const nombre = session.user?.user_metadata?.nombre || session.user?.email || "Usuario";
-  const rol    = session.user?.user_metadata?.rol || "vendedor";
-  const pend   = pedidos.filter(p => p.estado === "PENDIENTE").length;
+  const rol    = session.user?.user_metadata?.rol    || "vendedor";
+  const tienda = session.user?.user_metadata?.tienda || "tienda1";
+  const esLimitada = tienda === "tienda3";
 
-  const nav = [
-    { sec:"Principal", items:[
-      { id:"dashboard", i:"⬡",  lbl:"Dashboard" },
-      { id:"cotizador", i:"🧮", lbl:"Nuevo Pedido" },
-    ]},
-    { sec:"Gestión", items:[
-      { id:"pedidos",  i:"📦", lbl:"Pedidos",  bx:pend||null },
-      { id:"historial",i:"📋", lbl:"Historial" },
-      { id:"caja",     i:"💰", lbl:"Caja"      },
-    ]},
-    { sec:"Catálogo", items:[
-      { id:"catalogo",i:"🗂️", lbl:"Ver Catálogo" },
-      ...(rol==="admin" ? [{ id:"precios", i:"⚙️", lbl:"Gestión Precios" }] : []),
-    ]},
-  ];
+  const pend = pedidos.filter(p => p.estado === "PENDIENTE").length;
 
-  const navLabel = nav.flatMap(s=>s.items).find(i=>i.id===pag)?.lbl || "";
+  const catalogoCustom = productosCustom.map(p => ({
+    id: p.id, nombre: p.nombre, tipo: "custom", icon: "📦",
+    cat: "Personalizado", unidad: "unidad", precio: p.precio,
+    medidas: false, mats: [], acabados: [], _esCustom: true,
+  }));
+  const catalogoCompleto = [...CATALOGO, ...catalogoCustom];
+
+  const nav = esLimitada
+    ? [
+        { sec:"Tienda", items:[
+          { id:"cotizador", i:"🧮", lbl:"Nuevo Pedido" },
+          { id:"historial", i:"📋", lbl:"Historial"    },
+          { id:"catalogo",  i:"🗂️", lbl:"Ver Catálogo" },
+        ]},
+      ]
+    : [
+        { sec:"Principal", items:[
+          { id:"dashboard", i:"⬡",  lbl:"Dashboard"    },
+          { id:"cotizador", i:"🧮", lbl:"Nuevo Pedido"  },
+        ]},
+        { sec:"Gestión", items:[
+          { id:"pedidos",   i:"📦", lbl:"Pedidos",  bx:pend||null },
+          { id:"historial", i:"📋", lbl:"Historial" },
+          { id:"caja",      i:"💰", lbl:"Caja"      },
+        ]},
+        { sec:"Catálogo", items:[
+          { id:"catalogo", i:"🗂️", lbl:"Ver Catálogo" },
+          ...(rol==="admin" ? [{ id:"precios", i:"⚙️", lbl:"Gestión Precios" }] : []),
+        ]},
+      ];
+
+  // Si tienda3 aterriza en una página que no tiene acceso, redirigir
+  const pagActual = esLimitada && !["cotizador","historial","catalogo"].includes(pag)
+    ? "cotizador"
+    : pag;
+
+  const allItems  = nav.flatMap(s => s.items);
+  const navLabel  = allItems.find(i => i.id === pagActual)?.lbl || "";
   const cerrarMenu = () => setMenuOpen(false);
-  const navegarA = (id) => { setPag(id); cerrarMenu(); };
+  const navegarA   = (id) => { setPag(id); cerrarMenu(); };
 
   return (
     <div className="root">
-      {/* Header visible solo en móvil */}
       <div className="mob-hd">
         <button className="mob-ham" onClick={()=>setMenuOpen(o=>!o)}>☰</button>
         <span className="mob-brand">creatrix</span>
         <span className="mob-pg">{navLabel}</span>
       </div>
 
-      {/* Backdrop para cerrar el menú en móvil */}
       <div className={`sb-backdrop${menuOpen?" open":""}`} onClick={cerrarMenu}/>
 
       <aside className={`sb${menuOpen?" open":""}`}>
         <div className="sb-logo">
-          <div className="sb-brandmark">
-            <div className="sb-hex"><div className="sb-hex-inner">◈</div></div>
-            <div className="sb-brand-text">
-              <div className="sb-name">creatrix</div>
-              <div className="sb-tagline">Diseño & Publicidad</div>
-            </div>
-          </div>
+          <img src="/logo.png" alt="Logo" style={{height:44,objectFit:"contain",display:"block",margin:"0 auto 6px"}}/>
+          <div className="sb-tagline" style={{textAlign:"center"}}>{tienda === "tienda3" ? "Tienda 3" : tienda === "tienda2" ? "Tienda 2" : "Tienda 1"}</div>
         </div>
 
         {nav.map(sec => (
@@ -118,7 +139,7 @@ export default function App() {
             <div className="sb-sec">{sec.sec}</div>
             <div className="sb-nav">
               {sec.items.map(item => (
-                <div key={item.id} className={`sb-item${pag===item.id?" on":""}`} onClick={()=>navegarA(item.id)}>
+                <div key={item.id} className={`sb-item${pagActual===item.id?" on":""}`} onClick={()=>navegarA(item.id)}>
                   <span className="sb-ico">{item.i}</span>
                   <span>{item.lbl}</span>
                   {item.bx ? <span className="sb-bx">{item.bx}</span> : null}
@@ -143,13 +164,13 @@ export default function App() {
       </aside>
 
       <main className="main">
-        {pag==="dashboard" && <Dashboard pedidos={pedidos} pagos={pagos} catalogo={catalogo} setPag={setPag}/>}
-        {pag==="cotizador" && <Cotizador catalogo={catalogo} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag}/>}
-        {pag==="pedidos"   && <Pedidos  pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos}/>}
-        {pag==="historial" && <Historial pedidos={pedidos} pagos={pagos}/>}
-        {pag==="caja"      && <Caja pagos={pagos}/>}
-        {pag==="catalogo"  && <CatalogoVista catalogo={catalogo}/>}
-        {pag==="precios"   && rol==="admin" && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo}/>}
+        {pagActual==="dashboard" && <Dashboard pedidos={pedidos} pagos={pagos} catalogo={catalogo} setPag={setPag}/>}
+        {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda}/>}
+        {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol}/>}
+        {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos}/>}
+        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagos}/>}
+        {pagActual==="catalogo"  && <CatalogoVista catalogo={catalogoCompleto}/>}
+        {pagActual==="precios"   && rol==="admin" && !esLimitada && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo} productosCustom={productosCustom} setProductosCustom={setProductosCustom} tienda={tienda}/>}
       </main>
     </div>
   );

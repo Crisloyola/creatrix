@@ -191,7 +191,7 @@ export default function App() {
 
       <main className="main">
         {pagActual==="dashboard" && <Dashboard pedidos={pedidos} pagos={pagos} catalogo={catalogo} setPag={setPag}/>}
-        {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda} draft={cotDraft} setDraft={setCotDraft}/>}
+        {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda} draft={cotDraft} setDraft={setCotDraft} setProductosCustom={setProductosCustom}/>}
         {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol}/>}
         {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos} filtros={histFiltros} setFiltros={setHistFiltros}/>}
         {pagActual==="caja"      && !esLimitada && <Caja pagos={pagos}/>}

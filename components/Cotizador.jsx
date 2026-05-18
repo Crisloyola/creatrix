@@ -697,7 +697,7 @@ function ResumenPrecio({ item }) {
 }
 
 // ── Componente principal ─────────────────────────────────────────────────────
-export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tienda, draft, setDraft }) {
+export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tienda, draft, setDraft, setProductosCustom }) {
   const { cliente, tel, items, igv, catAct } = draft;
   const setCliente = v  => setDraft(d => ({ ...d, cliente: v }));
   const setTel     = v  => setDraft(d => ({ ...d, tel: v }));
@@ -708,6 +708,10 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
   const [saved, setSaved] = useState(null);
   const [pdfMd, setPdfMd] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [nuevoMd, setNuevoMd] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState("");
+  const [nuevoPrecio, setNuevoPrecio] = useState("");
+  const [guardandoNuevo, setGuardandoNuevo] = useState(false);
 
   const cats = ["Todos", ...new Set(catalogo.map(c => c.cat))];
   const prods = catalogo.filter(p => catAct === "Todos" || p.cat === catAct);
@@ -746,6 +750,24 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
     setPedidos(prev => [data, ...prev]);
     setSaved(data);
     setDraft({ cliente: "", tel: "", items: [], igv: false, catAct: "Todos" });
+  };
+
+  const agregarNuevo = async () => {
+    if (!nuevoNombre.trim()) { alert("Escribe el nombre del producto"); return; }
+    const precio = parseFloat(nuevoPrecio);
+    if (!precio || precio <= 0) { alert("Ingresa un precio válido"); return; }
+    setGuardandoNuevo(true);
+    const { data, error } = await supabase.from('productos_custom')
+      .insert({ nombre: nuevoNombre.trim(), precio, tienda_id: tienda || 'tienda1' })
+      .select().single();
+    setGuardandoNuevo(false);
+    if (error) { alert("Error al guardar: " + error.message); return; }
+    setProductosCustom(prev => [...prev, data]);
+    const prod = { id: data.id, nombre: data.nombre, tipo: "custom", icon: "📦", cat: "Personalizado", unidad: "unidad", precio: data.precio, medidas: false, mats: [], acabados: [], _esCustom: true };
+    add(prod);
+    setNuevoNombre("");
+    setNuevoPrecio("");
+    setNuevoMd(false);
   };
 
   const whatsapp = (ped) => {
@@ -828,6 +850,11 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
                 <div className="cpc-p">desde {fM(prod.precio)}/{prod.unidad}</div>
               </div>
             ))}
+            <div className="cpc" style={{ borderStyle: "dashed", opacity: .7 }} onClick={() => setNuevoMd(true)}>
+              <span className="cpc-i">＋</span>
+              <div className="cpc-n">Nuevo producto</div>
+              <div className="cpc-p">precio libre</div>
+            </div>
           </div>
         </div>
       </div>
@@ -890,6 +917,37 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
       )}
 
       {pdfMd && saved && <ModalPdf pedido={saved} pagos={[]} onClose={() => setPdfMd(false)} />}
+
+      {nuevoMd && (
+        <div className="ov" onClick={() => setNuevoMd(false)}>
+          <div className="md mdsm" onClick={e => e.stopPropagation()}>
+            <div className="cb">
+              <div className="fb mb3">
+                <div className="ctit" style={{ margin: 0 }}>Nuevo producto</div>
+                <button className="btn bg bsm" onClick={() => setNuevoMd(false)}>✕</button>
+              </div>
+              <div className="fg">
+                <label className="lb">Nombre</label>
+                <input className="inp" value={nuevoNombre} onChange={e => setNuevoNombre(e.target.value)}
+                  placeholder="Ej: Tarjeta de presentación" autoFocus
+                  onKeyDown={e => e.key === "Enter" && agregarNuevo()} />
+              </div>
+              <div className="fg">
+                <label className="lb">Precio (S/)</label>
+                <input className="inp" type="number" min="0" step="0.5" value={nuevoPrecio}
+                  onChange={e => setNuevoPrecio(e.target.value)} placeholder="0.00"
+                  onKeyDown={e => e.key === "Enter" && agregarNuevo()} />
+              </div>
+              <div className="r g2 mt3 je">
+                <button className="btn bg" onClick={() => setNuevoMd(false)}>Cancelar</button>
+                <button className="btn bp" onClick={agregarNuevo} disabled={guardandoNuevo}>
+                  {guardandoNuevo ? "Guardando…" : "Agregar al pedido"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

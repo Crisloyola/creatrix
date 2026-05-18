@@ -11,6 +11,51 @@ const ROLLOS_B = [1, 1.5, 2, 3];
 const rollW = (w) => ROLLOS_B.find(r => r >= +w) ?? 3;
 const rollH = (h) => Math.ceil(+h / 0.5) * 0.5;
 
+// ── Costos proveedor (para calcular ganancia en tienda3) ─────────────────────
+const COSTOS = {
+  banner: {
+    'Banner 8 onzas':           8,
+    'Banner 13 onzas Black Out': 13,
+  },
+  vinil: {
+    'Vinil normal':   20,
+    'Vinil laminado': 25,
+  },
+  caballete: {
+    'Caballete 1.20×0.70m': 50,
+    'Caballete 1.50×0.80m': 60,
+    'Caballete 2.00×1.00m': 80,
+  },
+  parante: {
+    'Parante de fierro 2×1 + banner grueso':           60,
+    'Roll Screen aluminio 2×1 + banner grueso':        90,
+    'Parante tipo araña aluminio 2×1 + banner grueso': 95,
+    'Módulo de PVC + brandeo en vinil':               200,
+  },
+};
+
+function calcCosto(it) {
+  switch (it.tipo) {
+    case 'banner': {
+      const c = COSTOS.banner[it.mat] ?? 0;
+      return rollW(it.ancho) * rollH(it.alto) * c * +it.cantidad;
+    }
+    case 'vinil': {
+      const c = COSTOS.vinil[it.mat] ?? 0;
+      return +it.metros * c * +it.cantidad;
+    }
+    case 'caballete': {
+      const c = COSTOS.caballete[it.opcion] ?? 0;
+      return c * +it.cantidad;
+    }
+    case 'parante': {
+      const c = COSTOS.parante[it.opcion] ?? 0;
+      return c * +it.cantidad;
+    }
+    default: return null;
+  }
+}
+
 // ── Cálculo de subtotal por tipo de producto ────────────────────────────────
 function calcSub(it) {
   switch (it.tipo) {
@@ -747,6 +792,17 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
                     <input className="inp inpsm" value={item.nota} placeholder="Observaciones, color, diseño..." onChange={e => upd(item.key, "nota", e.target.value)} />
                   </div>
                   <div className="ci-sp"><ResumenPrecio item={item} /></div>
+                  {tienda === 'tienda3' && (() => {
+                    const costo = calcCosto(item);
+                    if (costo === null) return null;
+                    const ganancia = calcSub(item) - costo;
+                    return (
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:6,padding:'6px 10px',background:'rgba(34,211,160,.07)',borderRadius:8,border:'1px solid rgba(34,211,160,.15)'}}>
+                        <span style={{fontSize:'.68rem',color:'var(--t3)'}}>Costo proveedor: <span style={{fontFamily:'var(--m)',color:'var(--t2)'}}>{fM(costo)}</span></span>
+                        <span style={{fontSize:'.75rem',fontFamily:'var(--m)',fontWeight:700,color:'var(--gr)'}}>Ganancia: {fM(ganancia)}</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>

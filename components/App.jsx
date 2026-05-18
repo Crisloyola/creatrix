@@ -15,6 +15,7 @@ import PreciosEdit from "./PreciosEdit";
 export default function App() {
   const [session, setSession] = useState(null);
   const [pag, setPag] = useState("dashboard");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [pedidos, setPedidos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [catalogo, setCatalogo] = useState(CATALOGO);
@@ -85,9 +86,23 @@ export default function App() {
     ]},
   ];
 
+  const navLabel = nav.flatMap(s=>s.items).find(i=>i.id===pag)?.lbl || "";
+  const cerrarMenu = () => setMenuOpen(false);
+  const navegarA = (id) => { setPag(id); cerrarMenu(); };
+
   return (
     <div className="root">
-      <aside className="sb">
+      {/* Header visible solo en móvil */}
+      <div className="mob-hd">
+        <button className="mob-ham" onClick={()=>setMenuOpen(o=>!o)}>☰</button>
+        <span className="mob-brand">creatrix</span>
+        <span className="mob-pg">{navLabel}</span>
+      </div>
+
+      {/* Backdrop para cerrar el menú en móvil */}
+      <div className={`sb-backdrop${menuOpen?" open":""}`} onClick={cerrarMenu}/>
+
+      <aside className={`sb${menuOpen?" open":""}`}>
         <div className="sb-logo">
           <div className="sb-brandmark">
             <div className="sb-hex"><div className="sb-hex-inner">◈</div></div>
@@ -103,7 +118,7 @@ export default function App() {
             <div className="sb-sec">{sec.sec}</div>
             <div className="sb-nav">
               {sec.items.map(item => (
-                <div key={item.id} className={`sb-item${pag===item.id?" on":""}`} onClick={()=>setPag(item.id)}>
+                <div key={item.id} className={`sb-item${pag===item.id?" on":""}`} onClick={()=>navegarA(item.id)}>
                   <span className="sb-ico">{item.i}</span>
                   <span>{item.lbl}</span>
                   {item.bx ? <span className="sb-bx">{item.bx}</span> : null}

@@ -304,10 +304,84 @@ tbody tr:hover td { background:rgba(0,229,204,.02) }
 .neon-cyan { box-shadow:0 0 16px rgba(0,229,204,.15) }
 .neon-mag  { box-shadow:0 0 16px rgba(204,0,255,.15) }
 
+/* ── MOBILE HEADER ── */
+.mob-hd { display:none }
+
 @media(max-width:860px){
-  .sb { display:none }
-  .pg { padding:14px }
+  /* Layout base */
+  .root { flex-direction:column; height:100vh; overflow:hidden }
+  .main { flex:1; overflow-y:auto; padding-top:0 }
+
+  /* Sidebar como drawer */
+  .sb {
+    position:fixed; top:0; left:-260px; bottom:0; width:260px;
+    z-index:400; transition:left .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 30px rgba(0,0,0,.6);
+  }
+  .sb.open { left:0 }
+
+  /* Backdrop */
+  .sb-backdrop {
+    display:none; position:fixed; inset:0; background:rgba(4,2,15,.7);
+    z-index:399; backdrop-filter:blur(2px)
+  }
+  .sb-backdrop.open { display:block }
+
+  /* Header móvil */
+  .mob-hd {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 16px; height:54px; background:var(--bg1);
+    border-bottom:1px solid var(--border); flex-shrink:0; z-index:100;
+  }
+  .mob-brand {
+    font-size:1.1rem; font-weight:900; letter-spacing:-.02em;
+    background:linear-gradient(90deg, var(--cyan), #a78bfa);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text
+  }
+  .mob-ham {
+    width:36px; height:36px; background:var(--bg3); border:1px solid var(--border);
+    border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; cursor:pointer; color:var(--t2)
+  }
+  .mob-pg {
+    font-size:.72rem; font-weight:600; color:var(--t2);
+    background:var(--bg3); border:1px solid var(--border);
+    padding:4px 10px; border-radius:6px
+  }
+
+  /* Page padding */
+  .pg { padding:14px 14px 80px }
+
+  /* Stat grids */
   .sts4 { grid-template-columns:1fr 1fr }
+  .sts3 { grid-template-columns:1fr 1fr }
+
+  /* Form grids — todo a 1 columna */
   .fr2,.fr3,.fr4 { grid-template-columns:1fr }
+
+  /* Método de pago */
   .mg { grid-template-columns:repeat(3,1fr) }
+
+  /* Login card */
+  .lc { width:calc(100vw - 32px); padding:28px 22px; border-radius:16px }
+
+  /* Tablas — ya tienen overflow-x:auto */
+  .tw { font-size:.75rem }
+  thead th,.pdf-gh { font-size:.62rem }
+  tbody td { padding:9px 10px }
+
+  /* Modales */
+  .ov { padding:10px; align-items:flex-end }
+  .md { border-radius:18px 18px 0 0; max-height:94vh }
+  .mdsm,.mdmd,.mdlg { max-width:100% }
+
+  /* Caja */
+  .cjm { grid-template-columns:1fr }
+
+  /* Header de página */
+  .pg-hd { flex-direction:column; align-items:flex-start; gap:8px }
+  .igvsw { align-self:flex-start }
+
+  /* Botón cerrar sesión más compacto */
+  .sb-ft .btn { font-size:.72rem; padding:7px 12px }
 }

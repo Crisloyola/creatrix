@@ -61,7 +61,7 @@ function calcSub(it) {
   switch (it.tipo) {
     case "banner": {
       const area = rollW(it.ancho) * rollH(it.alto);
-      return area * it.precio * +it.cantidad + (it.bastidor ? (it.precioBastidor || 0) : 0) * +it.cantidad + (it.precioTubo || 0) * +it.cantidad;
+      return area * it.precio * +it.cantidad + (it.bastidor ? (it.precioBastidor || 0) : 0) * +it.cantidad + (it.troquelado ? (it.precioTroquelado || 0) : 0) * +it.cantidad + (it.precioTubo || 0) * +it.cantidad;
     }
 
     case "vinil":
@@ -126,7 +126,8 @@ function initItem(prod) {
                mat: prod.mats[0].nombre, precio: prod.mats[0].precio, mats: prod.mats,
                acabado: prod.acabados[0] || "", acabados: prod.acabados,
                tubo: "sin", precioTubo: 0,
-               bastidor: false, precioBastidor: prod.mats[0].precio * 2 };
+               bastidor: false, precioBastidor: prod.mats[0].precio * 2,
+               troquelado: false, precioTroquelado: 0 };
     case "vinil":
       return { ...b, anchoFijo: prod.anchoFijo, metros: 1,
                mat: prod.mats[0].nombre, precio: prod.mats[0].precio, mats: prod.mats,
@@ -164,7 +165,7 @@ function forSave(it) {
   const sub = calcSub(it);
   switch (it.tipo) {
     case "banner": {
-      const notaExtra = [it.tubo !== "sin" ? `Tubo ${it.tubo}` : "", it.bastidor ? "Bastidor de madera" : ""].filter(Boolean).join(", ");
+      const notaExtra = [it.tubo !== "sin" ? `Tubo ${it.tubo}` : "", it.bastidor ? "Bastidor de madera" : "", it.troquelado ? "Troquelado" : ""].filter(Boolean).join(", ");
       return { ...it, sub, unidad: "m²", medidas: true, ancho: rollW(it.ancho), alto: rollH(it.alto),
                nota: [it.nota, notaExtra].filter(Boolean).join(" · ") };
     }
@@ -248,7 +249,7 @@ function CamposBanner({ item, upd, updM }) {
           </div>
           {item.bastidor && (
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <input className="inp inpsm" type="number" min={0} step={0.5}
+              <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0} step={0.5}
                 value={item.precioBastidor}
                 onChange={e => upd(item.key, "precioBastidor", parseFloat(e.target.value) || 0)}
                 style={{ maxWidth: 120 }} />
@@ -257,22 +258,42 @@ function CamposBanner({ item, upd, updM }) {
           )}
         </div>
       </div>
+      <div className="fg">
+        <label className="lb">Troquelado</label>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <div className={`mc${item.troquelado ? " on" : ""}`}
+            style={{ flex: "0 0 auto", minWidth: 140 }}
+            onClick={() => upd(item.key, "troquelado", !item.troquelado)}>
+            <div className="mc-l" style={{ fontWeight: 600 }}>{item.troquelado ? "✓ Con troquelado" : "Sin troquelado"}</div>
+            {!item.troquelado && <div style={{ fontSize: ".65rem", color: "var(--t3)", marginTop: 2 }}>costo extra por unidad</div>}
+          </div>
+          {item.troquelado && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0} step={0.5}
+                value={item.precioTroquelado}
+                onChange={e => upd(item.key, "precioTroquelado", parseFloat(e.target.value) || 0)}
+                style={{ maxWidth: 120 }} />
+              <div className="fxs td">Precio extra troquelado/und</div>
+            </div>
+          )}
+        </div>
+      </div>
       <div className="fr fr4" style={{ gap: 10 }}>
         <div className="fg">
           <label className="lb">Ancho real (m)</label>
-          <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.ancho}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.1} step={0.1} value={item.ancho}
             onChange={e => upd(item.key, "ancho", e.target.value)}
             onBlur={e => upd(item.key, "ancho", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Alto real (m)</label>
-          <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.alto}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.1} step={0.1} value={item.alto}
             onChange={e => upd(item.key, "alto", e.target.value)}
             onBlur={e => upd(item.key, "alto", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Cantidad</label>
-          <input className="inp inpsm" type="number" min={1} value={item.cantidad}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad}
             onChange={e => upd(item.key, "cantidad", e.target.value)} />
         </div>
         <div className="fg">
@@ -332,13 +353,13 @@ function CamposVinil({ item, upd, updM }) {
         </div>
         <div className="fg">
           <label className="lb">Metros lineales</label>
-          <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.metros}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.1} step={0.1} value={item.metros}
             onChange={e => upd(item.key, "metros", e.target.value)}
             onBlur={e => upd(item.key, "metros", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Cantidad</label>
-          <input className="inp inpsm" type="number" min={1} value={item.cantidad}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad}
             onChange={e => upd(item.key, "cantidad", e.target.value)} />
         </div>
       </div>
@@ -376,7 +397,7 @@ function CamposUvDtf({ item, upd, updM }) {
           </div>
           <div className="fg">
             <label className="lb">Largo (metros)</label>
-            <input className="inp inpsm" type="number" min={0.5} step={0.1} value={item.metros}
+            <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.5} step={0.1} value={item.metros}
               onChange={e => upd(item.key, "metros", e.target.value)}
               onBlur={e => upd(item.key, "metros", r1(e.target.value, 0.5))} />
           </div>
@@ -384,7 +405,7 @@ function CamposUvDtf({ item, upd, updM }) {
       )}
       <div className="fg">
         <label className="lb">Cantidad</label>
-        <input className="inp inpsm" type="number" min={1} value={item.cantidad} style={{ maxWidth: 100 }}
+        <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad} style={{ maxWidth: 100 }}
           onChange={e => upd(item.key, "cantidad", e.target.value)} />
       </div>
     </>
@@ -415,14 +436,14 @@ function CamposVinilCorte({ item, upd }) {
         </div>
         <div className="fg">
           <label className="lb">Largo (m) — mín. 20cm</label>
-          <input className="inp inpsm" type="number" min={0.20} step={0.1} value={item.metros}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.20} step={0.1} value={item.metros}
             onChange={e => upd(item.key, "metros", e.target.value)}
             onBlur={e => upd(item.key, "metros", r1(e.target.value, 0.2))} />
           <div className="fxs td mt1">Primeros 20cm = S/20 · Resto: S/50/m</div>
         </div>
         <div className="fg">
           <label className="lb">Cantidad</label>
-          <input className="inp inpsm" type="number" min={1} value={item.cantidad}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad}
             onChange={e => upd(item.key, "cantidad", e.target.value)} />
         </div>
       </div>
@@ -447,7 +468,7 @@ function CamposOpcion({ item, upd, updM, label }) {
       </div>
       <div className="fg">
         <label className="lb">Cantidad</label>
-        <input className="inp inpsm" type="number" min={1} value={item.cantidad} style={{ maxWidth: 100 }}
+        <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad} style={{ maxWidth: 100 }}
           onChange={e => upd(item.key, "cantidad", e.target.value)} />
       </div>
     </>
@@ -490,7 +511,7 @@ function CamposImantado({ item, upd, updM }) {
           </div>
           <div className="fg">
             <label className="lb">Cantidad de packs</label>
-            <input className="inp inpsm" type="number" min={1} value={item.cantidad} style={{ maxWidth: 100 }}
+            <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad} style={{ maxWidth: 100 }}
               onChange={e => upd(item.key, "cantidad", e.target.value)} />
           </div>
         </>
@@ -498,13 +519,13 @@ function CamposImantado({ item, upd, updM }) {
         <div className="fr fr2" style={{ gap: 10 }}>
           <div className="fg">
             <label className="lb">Metros lineales</label>
-            <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.metros}
+            <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.1} step={0.1} value={item.metros}
               onChange={e => upd(item.key, "metros", e.target.value)}
               onBlur={e => upd(item.key, "metros", r1(e.target.value))} />
           </div>
           <div className="fg">
             <label className="lb">Cantidad</label>
-            <input className="inp inpsm" type="number" min={1} value={item.cantidad}
+            <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad}
               onChange={e => upd(item.key, "cantidad", e.target.value)} />
           </div>
         </div>
@@ -520,19 +541,19 @@ function CamposLetrero({ item, upd }) {
       <div className="fr fr3" style={{ gap: 10 }}>
         <div className="fg">
           <label className="lb">Ancho real (m)</label>
-          <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.ancho}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.1} step={0.1} value={item.ancho}
             onChange={e => upd(item.key, "ancho", e.target.value)}
             onBlur={e => upd(item.key, "ancho", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Alto (m) — máx {item.alturaMax}m</label>
-          <input className="inp inpsm" type="number" min={0.1} step={0.1} max={item.alturaMax} value={item.alto}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.1} step={0.1} max={item.alturaMax} value={item.alto}
             onChange={e => upd(item.key, "alto", e.target.value)}
             onBlur={e => upd(item.key, "alto", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Cantidad</label>
-          <input className="inp inpsm" type="number" min={1} value={item.cantidad}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad}
             onChange={e => upd(item.key, "cantidad", e.target.value)} />
         </div>
       </div>
@@ -566,7 +587,7 @@ function CamposCartas({ item, upd, updM }) {
       <div className="fr fr2" style={{ gap: 10 }}>
         <div className="fg">
           <label className="lb">Cantidad</label>
-          <input className="inp inpsm" type="number" min={1} value={item.cantidad}
+          <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad}
             onChange={e => upd(item.key, "cantidad", e.target.value)} />
           <div className="fxs td mt1">Precio actual: {fM(precioUnit)}/und</div>
         </div>
@@ -601,7 +622,7 @@ function CamposMerchandising({ item, upd, updM }) {
       </div>
       <div className="fg">
         <label className="lb">Cantidad{esCiento ? " (unidades)" : ""}</label>
-        <input className="inp inpsm" type="number" min={esCiento ? 100 : 1} step={esCiento ? 100 : 1} value={item.cantidad} style={{ maxWidth: 120 }}
+        <input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={esCiento ? 100 : 1} step={esCiento ? 100 : 1} value={item.cantidad} style={{ maxWidth: 120 }}
           onChange={e => upd(item.key, "cantidad", e.target.value)} />
         {esCiento && <div className="fxs td mt1">{cientos} ciento{cientos !== 1 ? "s" : ""} · {fM(precioUnit)}/ciento</div>}
         {!esCiento && <div className="fxs td mt1">{fM(precioUnit)}/und</div>}
@@ -615,11 +636,11 @@ function CamposGenerico({ item, upd }) {
     <>
       <div className="fr fr4" style={{ gap: 10 }}>
         {item.medidas && <>
-          <div className="fg"><label className="lb">Ancho (m)</label><input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.ancho} onChange={e => upd(item.key, "ancho", e.target.value)} onBlur={e => upd(item.key, "ancho", r1(e.target.value))} /></div>
-          <div className="fg"><label className="lb">Alto (m)</label><input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.alto} onChange={e => upd(item.key, "alto", e.target.value)} onBlur={e => upd(item.key, "alto", r1(e.target.value))} /></div>
+          <div className="fg"><label className="lb">Ancho (m)</label><input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.1} step={0.1} value={item.ancho} onChange={e => upd(item.key, "ancho", e.target.value)} onBlur={e => upd(item.key, "ancho", r1(e.target.value))} /></div>
+          <div className="fg"><label className="lb">Alto (m)</label><input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0.1} step={0.1} value={item.alto} onChange={e => upd(item.key, "alto", e.target.value)} onBlur={e => upd(item.key, "alto", r1(e.target.value))} /></div>
         </>}
-        <div className="fg"><label className="lb">Cantidad</label><input className="inp inpsm" type="number" min={1} value={item.cantidad} onChange={e => upd(item.key, "cantidad", e.target.value)} /></div>
-        <div className="fg"><label className="lb">Precio/{item.unidad}</label><input className="inp inpsm" type="number" min={0} step={0.5} value={item.precio} onChange={e => upd(item.key, "precio", e.target.value)} /></div>
+        <div className="fg"><label className="lb">Cantidad</label><input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={1} value={item.cantidad} onChange={e => upd(item.key, "cantidad", e.target.value)} /></div>
+        <div className="fg"><label className="lb">Precio/{item.unidad}</label><input className="inp inpsm" type="number" onFocus={e => e.target.select()} min={0} step={0.5} value={item.precio} onChange={e => upd(item.key, "precio", e.target.value)} /></div>
       </div>
       {item.mats.length > 0 && (
         <div className="fr fr2" style={{ gap: 10 }}>
@@ -651,7 +672,8 @@ function ResumenPrecio({ item }) {
       const aw = rollW(item.ancho), ah = rollH(item.alto);
       const tuboTxt = item.precioTubo > 0 ? ` + tubo ${fM(item.precioTubo)}×${item.cantidad}` : "";
       const bastidorTxt = item.bastidor && item.precioBastidor > 0 ? ` + bastidor ${fM(item.precioBastidor)}×${item.cantidad}` : "";
-      return <><span className="td fxs">{aw}m × {ah}m × {item.cantidad} × {fM(item.precio)}/m²{bastidorTxt}{tuboTxt} = </span>{fM(sub)}</>;
+      const troqTxt = item.troquelado && item.precioTroquelado > 0 ? ` + troquelado ${fM(item.precioTroquelado)}×${item.cantidad}` : "";
+      return <><span className="td fxs">{aw}m × {ah}m × {item.cantidad} × {fM(item.precio)}/m²{bastidorTxt}{troqTxt}{tuboTxt} = </span>{fM(sub)}</>;
     }
     case "vinil":
       return <><span className="td fxs">{item.metros}m × {item.cantidad} × {fM(item.precio + item.precioBase)}/m = </span>{fM(sub)}</>;
@@ -934,7 +956,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
               </div>
               <div className="fg">
                 <label className="lb">Precio (S/)</label>
-                <input className="inp" type="number" min="0" step="0.5" value={nuevoPrecio}
+                <input className="inp" type="number" onFocus={e => e.target.select()} min="0" step="0.5" value={nuevoPrecio}
                   onChange={e => setNuevoPrecio(e.target.value)} placeholder="0.00"
                   onKeyDown={e => e.key === "Enter" && agregarNuevo()} />
               </div>

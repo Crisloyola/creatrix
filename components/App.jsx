@@ -11,6 +11,7 @@ import Historial from "./Historial";
 import Caja from "./Caja";
 import CatalogoVista from "./CatalogoVista";
 import PreciosEdit from "./PreciosEdit";
+import Reportes from "./Reportes";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -20,6 +21,9 @@ export default function App() {
   const [pagos, setPagos] = useState([]);
   const [catalogo, setCatalogo] = useState(CATALOGO);
   const [productosCustom, setProductosCustom] = useState([]);
+  const [reportes, setReportes] = useState([]);
+  const [histFiltros, setHistFiltros] = useState({ busq: "", desde: "", hasta: "" });
+  const [cotDraft, setCotDraft] = useState({ cliente: "", tel: "", items: [], igv: false, catAct: "Todos" });
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -41,14 +45,19 @@ export default function App() {
   async function cargarDatos(sess) {
     setCargando(true);
     const tienda = sess?.user?.user_metadata?.tienda || 'tienda1';
-    const [{ data: peds }, { data: pays }, { data: prods }] = await Promise.all([
+    const esAdmin = (sess?.user?.user_metadata?.rol || 'vendedor') === 'admin';
+    const [{ data: peds }, { data: pays }, { data: prods }, { data: reps }] = await Promise.all([
       supabase.from('pedidos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: false }),
       supabase.from('pagos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: true }),
       supabase.from('productos_custom').select('*').eq('tienda_id', tienda).order('created_at', { ascending: true }),
+      esAdmin
+        ? supabase.from('reportes_semanales').select('*').eq('tienda_id', tienda).order('semana_inicio', { ascending: false })
+        : Promise.resolve({ data: [] }),
     ]);
     if (peds)  setPedidos(peds);
     if (pays)  setPagos(pays);
     if (prods) setProductosCustom(prods);
+    if (reps)  setReportes(reps);
     setCargando(false);
   }
 
@@ -101,6 +110,7 @@ export default function App() {
           { id:"pedidos",   i:"📦", lbl:"Pedidos",  bx:pend||null },
           { id:"historial", i:"📋", lbl:"Historial" },
           { id:"caja",      i:"💰", lbl:"Caja"      },
+          ...(rol==="admin" ? [{ id:"reportes", i:"📊", lbl:"Reportes" }] : []),
         ]},
         { sec:"Catálogo", items:[
           { id:"catalogo", i:"🗂️", lbl:"Ver Catálogo" },
@@ -165,12 +175,13 @@ export default function App() {
 
       <main className="main">
         {pagActual==="dashboard" && <Dashboard pedidos={pedidos} pagos={pagos} catalogo={catalogo} setPag={setPag}/>}
-        {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda}/>}
+        {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda} draft={cotDraft} setDraft={setCotDraft}/>}
         {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol}/>}
-        {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos}/>}
+        {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos} filtros={histFiltros} setFiltros={setHistFiltros}/>}
         {pagActual==="caja"      && !esLimitada && <Caja pagos={pagos}/>}
         {pagActual==="catalogo"  && <CatalogoVista catalogo={catalogoCompleto}/>}
         {pagActual==="precios"   && rol==="admin" && !esLimitada && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo} productosCustom={productosCustom} setProductosCustom={setProductosCustom} tienda={tienda}/>}
+        {pagActual==="reportes"  && rol==="admin" && !esLimitada && <Reportes reportes={reportes} setReportes={setReportes} tienda={tienda} pedidos={pedidos} pagos={pagos}/>}
       </main>
     </div>
   );

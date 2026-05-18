@@ -35,7 +35,7 @@ export default function ModalPdf({pedido,pagos,onClose}){
     </head><body>
     <div class="top">
       <div>
-        <img src="${window.location.origin}/logo.png" alt="Logo" style="height:52px;object-fit:contain;display:block;margin-bottom:4px"/>
+        <img src="${window.location.origin}/logooscuro.png" alt="Logo" style="height:52px;object-fit:contain;display:block;margin-bottom:4px"/>
       </div>
       <div class="info">
         <div><b>Código:</b> ${pedido.codigo}</div>
@@ -84,7 +84,7 @@ export default function ModalPdf({pedido,pagos,onClose}){
           <div className="pdf">
             <div className="pdf-top">
               <div>
-                <img src="/logo.png" alt="Logo" style={{height:52,objectFit:"contain",display:"block",marginBottom:4}}/>
+                <img src="/logooscuro.png" alt="Logo" style={{height:52,objectFit:"contain",display:"block",marginBottom:4}}/>
               </div>
               <div className="pdf-info">
                 <div><b>{pedido.codigo}</b></div>

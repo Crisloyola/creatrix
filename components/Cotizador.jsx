@@ -199,6 +199,9 @@ function forSave(it) {
   }
 }
 
+// ── Redondear a 1 decimal al salir del campo ────────────────────────────────
+const r1 = (v, min = 0.1) => Math.max(min, Math.round(+v * 10) / 10) || min;
+
 // ── Campos del formulario por tipo ──────────────────────────────────────────
 const TUBOS_OPT = [
   { id: "sin", lbl: "Sin tubo",  precio: 0 },
@@ -259,13 +262,15 @@ function CamposBanner({ item, upd, updM }) {
       <div className="fr fr4" style={{ gap: 10 }}>
         <div className="fg">
           <label className="lb">Ancho real (m)</label>
-          <input className="inp inpsm" type="number" min={0.1} step={0.05} value={item.ancho}
-            onChange={e => upd(item.key, "ancho", e.target.value)} />
+          <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.ancho}
+            onChange={e => upd(item.key, "ancho", e.target.value)}
+            onBlur={e => upd(item.key, "ancho", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Alto real (m)</label>
-          <input className="inp inpsm" type="number" min={0.1} step={0.05} value={item.alto}
-            onChange={e => upd(item.key, "alto", e.target.value)} />
+          <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.alto}
+            onChange={e => upd(item.key, "alto", e.target.value)}
+            onBlur={e => upd(item.key, "alto", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Cantidad</label>
@@ -330,7 +335,8 @@ function CamposVinil({ item, upd, updM }) {
         <div className="fg">
           <label className="lb">Metros lineales</label>
           <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.metros}
-            onChange={e => upd(item.key, "metros", e.target.value)} />
+            onChange={e => upd(item.key, "metros", e.target.value)}
+            onBlur={e => upd(item.key, "metros", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Cantidad</label>
@@ -373,7 +379,8 @@ function CamposUvDtf({ item, upd, updM }) {
           <div className="fg">
             <label className="lb">Largo (metros)</label>
             <input className="inp inpsm" type="number" min={0.5} step={0.1} value={item.metros}
-              onChange={e => upd(item.key, "metros", e.target.value)} />
+              onChange={e => upd(item.key, "metros", e.target.value)}
+              onBlur={e => upd(item.key, "metros", r1(e.target.value, 0.5))} />
           </div>
         </div>
       )}
@@ -410,8 +417,9 @@ function CamposVinilCorte({ item, upd }) {
         </div>
         <div className="fg">
           <label className="lb">Largo (m) — mín. 20cm</label>
-          <input className="inp inpsm" type="number" min={0.20} step={0.05} value={item.metros}
-            onChange={e => upd(item.key, "metros", e.target.value)} />
+          <input className="inp inpsm" type="number" min={0.20} step={0.1} value={item.metros}
+            onChange={e => upd(item.key, "metros", e.target.value)}
+            onBlur={e => upd(item.key, "metros", r1(e.target.value, 0.2))} />
           <div className="fxs td mt1">Primeros 20cm = S/20 · Resto: S/50/m</div>
         </div>
         <div className="fg">
@@ -493,7 +501,8 @@ function CamposImantado({ item, upd, updM }) {
           <div className="fg">
             <label className="lb">Metros lineales</label>
             <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.metros}
-              onChange={e => upd(item.key, "metros", e.target.value)} />
+              onChange={e => upd(item.key, "metros", e.target.value)}
+              onBlur={e => upd(item.key, "metros", r1(e.target.value))} />
           </div>
           <div className="fg">
             <label className="lb">Cantidad</label>
@@ -514,12 +523,14 @@ function CamposLetrero({ item, upd }) {
         <div className="fg">
           <label className="lb">Ancho real (m)</label>
           <input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.ancho}
-            onChange={e => upd(item.key, "ancho", e.target.value)} />
+            onChange={e => upd(item.key, "ancho", e.target.value)}
+            onBlur={e => upd(item.key, "ancho", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Alto (m) — máx {item.alturaMax}m</label>
           <input className="inp inpsm" type="number" min={0.1} step={0.1} max={item.alturaMax} value={item.alto}
-            onChange={e => upd(item.key, "alto", e.target.value)} />
+            onChange={e => upd(item.key, "alto", e.target.value)}
+            onBlur={e => upd(item.key, "alto", r1(e.target.value))} />
         </div>
         <div className="fg">
           <label className="lb">Cantidad</label>
@@ -606,8 +617,8 @@ function CamposGenerico({ item, upd }) {
     <>
       <div className="fr fr4" style={{ gap: 10 }}>
         {item.medidas && <>
-          <div className="fg"><label className="lb">Ancho (m)</label><input className="inp inpsm" type="number" min={0.1} step={0.05} value={item.ancho} onChange={e => upd(item.key, "ancho", e.target.value)} /></div>
-          <div className="fg"><label className="lb">Alto (m)</label><input className="inp inpsm" type="number" min={0.1} step={0.05} value={item.alto} onChange={e => upd(item.key, "alto", e.target.value)} /></div>
+          <div className="fg"><label className="lb">Ancho (m)</label><input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.ancho} onChange={e => upd(item.key, "ancho", e.target.value)} onBlur={e => upd(item.key, "ancho", r1(e.target.value))} /></div>
+          <div className="fg"><label className="lb">Alto (m)</label><input className="inp inpsm" type="number" min={0.1} step={0.1} value={item.alto} onChange={e => upd(item.key, "alto", e.target.value)} onBlur={e => upd(item.key, "alto", r1(e.target.value))} /></div>
         </>}
         <div className="fg"><label className="lb">Cantidad</label><input className="inp inpsm" type="number" min={1} value={item.cantidad} onChange={e => upd(item.key, "cantidad", e.target.value)} /></div>
         <div className="fg"><label className="lb">Precio/{item.unidad}</label><input className="inp inpsm" type="number" min={0} step={0.5} value={item.precio} onChange={e => upd(item.key, "precio", e.target.value)} /></div>
@@ -688,15 +699,17 @@ function ResumenPrecio({ item }) {
 }
 
 // ── Componente principal ─────────────────────────────────────────────────────
-export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tienda }) {
-  const [cliente, setCliente] = useState("");
-  const [tel, setTel] = useState("");
-  const [items, setItems] = useState([]);
-  const [igv, setIgv] = useState(false);
+export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tienda, draft, setDraft }) {
+  const { cliente, tel, items, igv, catAct } = draft;
+  const setCliente = v  => setDraft(d => ({ ...d, cliente: v }));
+  const setTel     = v  => setDraft(d => ({ ...d, tel: v }));
+  const setItems   = fn => setDraft(d => ({ ...d, items: typeof fn === "function" ? fn(d.items) : fn }));
+  const setIgv     = v  => setDraft(d => ({ ...d, igv: v }));
+  const setCatAct  = v  => setDraft(d => ({ ...d, catAct: v }));
+
   const [saved, setSaved] = useState(null);
   const [pdfMd, setPdfMd] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [catAct, setCatAct] = useState("Todos");
 
   const cats = ["Todos", ...new Set(catalogo.map(c => c.cat))];
   const prods = catalogo.filter(p => catAct === "Todos" || p.cat === catAct);
@@ -734,7 +747,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
     if (error) { alert("Error al guardar: " + error.message); return; }
     setPedidos(prev => [data, ...prev]);
     setSaved(data);
-    setCliente(""); setTel(""); setItems([]);
+    setDraft({ cliente: "", tel: "", items: [], igv: false, catAct: "Todos" });
   };
 
   const whatsapp = (ped) => {
@@ -871,7 +884,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
             </div>
 
             <div className="r g2 mt3 je">
-              <button className="btn bg" onClick={() => setItems([])}>🗑 Limpiar</button>
+              <button className="btn bg" onClick={() => setDraft(d => ({ ...d, items: [], cliente: "", tel: "" }))}>🗑 Limpiar</button>
               <button className="btn bp blg" onClick={guardar} disabled={guardando}>{guardando?"Guardando…":"💾 Guardar Pedido"}</button>
             </div>
           </div>

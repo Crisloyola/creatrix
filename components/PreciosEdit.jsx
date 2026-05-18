@@ -46,52 +46,7 @@ export default function PreciosEdit({ catalogo, setCatalogo, productosCustom, se
     <div className="pg">
       <div className="pg-hd"><div><h2 className="gt-cyan">⚙️ Gestión de Precios</h2><p>Edita precios y productos del catálogo</p></div></div>
       <div className="glow-line" />
-
-      {/* Tabla catálogo base */}
-      <div className="tw mb3">
-        <table>
-          <thead>
-            <tr><th>Producto</th><th>Categoría</th><th>Unidad</th><th>Precio base</th><th>Detalle</th><th>Acciones</th></tr>
-          </thead>
-          <tbody>
-            {catalogo.map(prod => (
-              <tr key={prod.id}>
-                <td>
-                  <div className="r g2">
-                    <span style={{ fontSize: "1.2rem" }}>{prod.icon}</span>
-                    <span className="fw7">{prod.nombre}</span>
-                  </div>
-                </td>
-                <td className="fxs td">{prod.cat}</td>
-                <td className="mo fxs">{prod.unidad}</td>
-                <td>
-                  {editId === prod.id
-                    ? <input className="inp inpsm" type="number" value={nP} onChange={e => setNP(e.target.value)} style={{ width: 100 }} />
-                    : <span className="mo fw7 tc">{fM(prod.precio)}</span>
-                  }
-                </td>
-                <td className="fxs td" style={{ maxWidth: 200 }}>
-                  {tieneOpciones(prod) && prod.opciones.map(o => `${o.nombre}: ${fM(o.precio)}`).join(" · ")}
-                  {tieneMatsObj(prod)  && prod.mats.map(m => `${m.nombre}: ${fM(m.precio)}`).join(" · ")}
-                  {!tieneOpciones(prod) && !tieneMatsObj(prod) && Array.isArray(prod.mats) && prod.mats.slice(0, 3).join(", ")}
-                </td>
-                <td>
-                  <div className="ta">
-                    {editId === prod.id
-                      ? <>
-                          <button className="btn bs bsm" onClick={() => save(prod.id)}>✓ Guardar</button>
-                          <button className="btn bg bsm" onClick={() => setEditId(null)}>✕</button>
-                        </>
-                      : <button className="btn bcyan bsm" onClick={() => startEdit(prod)}>✏️ Editar</button>
-                    }
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
+      
       {/* Productos personalizados */}
       <div className="card">
         <div className="cb">
@@ -142,6 +97,53 @@ export default function PreciosEdit({ catalogo, setCatalogo, productosCustom, se
             </div>
           )}
         </div>
+      </div>
+
+      <div className="glow-line" style={{ margin: "28px 0" }} />
+
+      {/* Tabla catálogo base */}
+      <div className="tw mb3">
+        <table>
+          <thead>
+            <tr><th>Producto</th><th>Categoría</th><th>Unidad</th><th>Precio base</th><th>Detalle</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {catalogo.map(prod => (
+              <tr key={prod.id}>
+                <td>
+                  <div className="r g2">
+                    <span style={{ fontSize: "1.2rem" }}>{prod.icon}</span>
+                    <span className="fw7">{prod.nombre}</span>
+                  </div>
+                </td>
+                <td className="fxs td">{prod.cat}</td>
+                <td className="mo fxs">{prod.unidad}</td>
+                <td>
+                  {editId === prod.id
+                    ? <input className="inp inpsm" type="number" value={nP} onChange={e => setNP(e.target.value)} style={{ width: 100 }} />
+                    : <span className="mo fw7 tc">{fM(prod.precio)}</span>
+                  }
+                </td>
+                <td className="fxs td" style={{ maxWidth: 200 }}>
+                  {tieneOpciones(prod) && prod.opciones.map(o => `${o.nombre}: ${fM(o.precio)}`).join(" · ")}
+                  {tieneMatsObj(prod)  && prod.mats.map(m => `${m.nombre}: ${fM(m.precio)}`).join(" · ")}
+                  {!tieneOpciones(prod) && !tieneMatsObj(prod) && Array.isArray(prod.mats) && prod.mats.slice(0, 3).join(", ")}
+                </td>
+                <td>
+                  <div className="ta">
+                    {editId === prod.id
+                      ? <>
+                          <button className="btn bs bsm" onClick={() => save(prod.id)}>✓ Guardar</button>
+                          <button className="btn bg bsm" onClick={() => setEditId(null)}>✕</button>
+                        </>
+                      : <button className="btn bcyan bsm" onClick={() => startEdit(prod)}>✏️ Editar</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

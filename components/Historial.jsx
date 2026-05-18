@@ -9,8 +9,10 @@ const wa = (p) => {
   window.open(`https://wa.me/${(p.tel||"").replace(/\D/g,"")}?text=${encodeURIComponent(txt)}`,"_blank");
 };
 
-export default function Historial({pedidos,pagos}){
-  const [busq,setBusq]=useState(""); const [desde,setDesde]=useState(""); const [hasta,setHasta]=useState("");
+export default function Historial({pedidos,pagos,filtros,setFiltros}){
+  const busq=filtros.busq,  setBusq =v=>setFiltros(f=>({...f,busq:v}));
+  const desde=filtros.desde, setDesde=v=>setFiltros(f=>({...f,desde:v}));
+  const hasta=filtros.hasta, setHasta=v=>setFiltros(f=>({...f,hasta:v}));
   const [pdfMd,setPdfMd]=useState(null);
 
   const lista=[...pedidos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).filter(p=>{

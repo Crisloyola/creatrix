@@ -60,8 +60,8 @@ function calcCosto(it) {
 function calcSub(it) {
   switch (it.tipo) {
     case "banner": {
-      const precioBase = it.bastidor ? (it.precioBastidor || it.precio * 2) : it.precio;
-      return rollW(it.ancho) * rollH(it.alto) * precioBase * +it.cantidad + (it.precioTubo || 0) * +it.cantidad;
+      const area = rollW(it.ancho) * rollH(it.alto);
+      return area * it.precio * +it.cantidad + (it.bastidor ? (it.precioBastidor || 0) : 0) * +it.cantidad + (it.precioTubo || 0) * +it.cantidad;
     }
 
     case "vinil":
@@ -164,10 +164,8 @@ function forSave(it) {
   const sub = calcSub(it);
   switch (it.tipo) {
     case "banner": {
-      const precioEfectivo = it.bastidor ? (it.precioBastidor || it.precio * 2) : it.precio;
       const notaExtra = [it.tubo !== "sin" ? `Tubo ${it.tubo}` : "", it.bastidor ? "Bastidor de madera" : ""].filter(Boolean).join(", ");
       return { ...it, sub, unidad: "m²", medidas: true, ancho: rollW(it.ancho), alto: rollH(it.alto),
-               precio: precioEfectivo,
                nota: [it.nota, notaExtra].filter(Boolean).join(" · ") };
     }
     case "vinil":
@@ -246,7 +244,7 @@ function CamposBanner({ item, upd, updM }) {
             style={{ flex: "0 0 auto", minWidth: 140 }}
             onClick={() => upd(item.key, "bastidor", !item.bastidor)}>
             <div className="mc-l" style={{ fontWeight: 600 }}>{item.bastidor ? "✓ Con bastidor" : "Sin bastidor"}</div>
-            {!item.bastidor && <div style={{ fontSize: ".65rem", color: "var(--t3)", marginTop: 2 }}>duplica precio/m²</div>}
+            {!item.bastidor && <div style={{ fontSize: ".65rem", color: "var(--t3)", marginTop: 2 }}>costo extra por unidad</div>}
           </div>
           {item.bastidor && (
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -254,7 +252,7 @@ function CamposBanner({ item, upd, updM }) {
                 value={item.precioBastidor}
                 onChange={e => upd(item.key, "precioBastidor", parseFloat(e.target.value) || 0)}
                 style={{ maxWidth: 120 }} />
-              <div className="fxs td">Precio/m² con bastidor</div>
+              <div className="fxs td">Precio extra bastidor/und</div>
             </div>
           )}
         </div>
@@ -651,9 +649,9 @@ function ResumenPrecio({ item }) {
   switch (item.tipo) {
     case "banner": {
       const aw = rollW(item.ancho), ah = rollH(item.alto);
-      const precioBase = item.bastidor ? (item.precioBastidor || item.precio * 2) : item.precio;
       const tuboTxt = item.precioTubo > 0 ? ` + tubo ${fM(item.precioTubo)}×${item.cantidad}` : "";
-      return <><span className="td fxs">{aw}m × {ah}m × {item.cantidad} × {fM(precioBase)}/m²{tuboTxt} = </span>{fM(sub)}</>;
+      const bastidorTxt = item.bastidor && item.precioBastidor > 0 ? ` + bastidor ${fM(item.precioBastidor)}×${item.cantidad}` : "";
+      return <><span className="td fxs">{aw}m × {ah}m × {item.cantidad} × {fM(item.precio)}/m²{bastidorTxt}{tuboTxt} = </span>{fM(sub)}</>;
     }
     case "vinil":
       return <><span className="td fxs">{item.metros}m × {item.cantidad} × {fM(item.precio + item.precioBase)}/m = </span>{fM(sub)}</>;

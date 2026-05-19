@@ -1,12 +1,54 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { fM } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
 export default function PreciosEdit({ catalogo, setCatalogo, productosCustom, setProductosCustom, tienda }) {
   const [editId, setEditId] = useState(null);
   const [nP, setNP] = useState("");
+  const [qrUrl, setQrUrl] = useState(null);
+  const [qrSubiendo, setQrSubiendo] = useState(false);
+  const fileRef = useRef(null);
+
+  useEffect(()=>{
+    supabase.from('configuracion').select('valor')
+      .eq('tienda_id',tienda).eq('clave','qr_yape')
+      .maybeSingle().then(({data})=>{ if(data?.valor) setQrUrl(data.valor); });
+  },[]);
+
+  const subirQr=async(e)=>{
+    const file=e.target.files[0];
+    if(!file) return;
+    if(!file.type.startsWith('image/')){alert("Solo se permiten imágenes");return;}
+    if(file.size>3*1024*1024){alert("Imagen demasiado grande (máx 3 MB)");return;}
+    setQrSubiendo(true);
+    const reader=new FileReader();
+    reader.onload=async(ev)=>{
+      const base64=ev.target.result;
+      const{data:ex,error:errSel}=await supabase.from('configuracion').select('id').eq('tienda_id',tienda).eq('clave','qr_yape').maybeSingle();
+      if(errSel){alert("Error al leer: "+errSel.message);setQrSubiendo(false);return;}
+      let errOp;
+      if(ex){
+        const{error}=await supabase.from('configuracion').update({valor:base64}).eq('id',ex.id);
+        errOp=error;
+      }else{
+        const{error}=await supabase.from('configuracion').insert({tienda_id:tienda,clave:'qr_yape',valor:base64});
+        errOp=error;
+      }
+      if(errOp){alert("Error al guardar QR: "+errOp.message);setQrSubiendo(false);return;}
+      setQrUrl(base64);
+      setQrSubiendo(false);
+      if(fileRef.current) fileRef.current.value="";
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const eliminarQr=async()=>{
+    if(!window.confirm("¿Eliminar el QR de Yape?")) return;
+    await supabase.from('configuracion').delete().eq('tienda_id',tienda).eq('clave','qr_yape');
+    setQrUrl(null);
+  };
 
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoPrecio, setNuevoPrecio] = useState("");
@@ -46,7 +88,30 @@ export default function PreciosEdit({ catalogo, setCatalogo, productosCustom, se
     <div className="pg">
       <div className="pg-hd"><div><h2 className="gt-cyan">⚙️ Gestión de Precios</h2><p>Edita precios y productos del catálogo</p></div></div>
       <div className="glow-line" />
-      
+
+      {/* QR Yape */}
+      <div className="card" style={{marginBottom:20}}>
+        <div className="cb">
+          <div className="ctit">📱 QR de Yape</div>
+          <div style={{display:"flex",gap:20,alignItems:"flex-start",flexWrap:"wrap"}}>
+            <div style={{flex:"0 0 auto"}}>
+              {qrUrl
+                ?<img src={qrUrl} alt="QR Yape" style={{width:160,height:160,objectFit:"contain",borderRadius:10,border:"2px solid var(--border)",display:"block"}}/>
+                :<div style={{width:160,height:160,borderRadius:10,border:"2px dashed var(--border)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--t2)",fontSize:".8rem",textAlign:"center",padding:8}}>Sin QR configurado</div>
+              }
+            </div>
+            <div style={{flex:1,display:"flex",flexDirection:"column",gap:10,justifyContent:"center"}}>
+              <div style={{color:"var(--t2)",fontSize:".83rem"}}>Sube una imagen del QR de Yape. Los vendedores la verán al registrar un pago con Yape.</div>
+              <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={subirQr}/>
+              <button className="btn bp bsm" onClick={()=>fileRef.current?.click()} disabled={qrSubiendo}>
+                {qrSubiendo?"Subiendo…":"⬆ Subir nuevo QR"}
+              </button>
+              {qrUrl&&<button className="btn bd bsm" onClick={eliminarQr}>🗑 Eliminar QR</button>}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Productos personalizados */}
       <div className="card">
         <div className="cb">

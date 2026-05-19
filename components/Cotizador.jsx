@@ -720,12 +720,13 @@ function ResumenPrecio({ item }) {
 
 // ── Componente principal ─────────────────────────────────────────────────────
 export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tienda, draft, setDraft, setProductosCustom }) {
-  const { cliente, tel, items, igv, catAct } = draft;
-  const setCliente = v  => setDraft(d => ({ ...d, cliente: v }));
-  const setTel     = v  => setDraft(d => ({ ...d, tel: v }));
-  const setItems   = fn => setDraft(d => ({ ...d, items: typeof fn === "function" ? fn(d.items) : fn }));
-  const setIgv     = v  => setDraft(d => ({ ...d, igv: v }));
-  const setCatAct  = v  => setDraft(d => ({ ...d, catAct: v }));
+  const { cliente, tel, items, igv, catAct, descuento = "" } = draft;
+  const setCliente   = v  => setDraft(d => ({ ...d, cliente: v }));
+  const setTel       = v  => setDraft(d => ({ ...d, tel: v }));
+  const setItems     = fn => setDraft(d => ({ ...d, items: typeof fn === "function" ? fn(d.items) : fn }));
+  const setIgv       = v  => setDraft(d => ({ ...d, igv: v }));
+  const setCatAct    = v  => setDraft(d => ({ ...d, catAct: v }));
+  const setDescuento = v  => setDraft(d => ({ ...d, descuento: v }));
 
   const [saved, setSaved] = useState(null);
   const [pdfMd, setPdfMd] = useState(false);
@@ -743,9 +744,10 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
   const updM = (key, obj) => setItems(prev => prev.map(i => i.key === key ? { ...i, ...obj } : i));
   const rem  = (key) => setItems(prev => prev.filter(i => i.key !== key));
 
-  const subtotal = items.reduce((a, i) => a + calcSub(i), 0);
-  const igvMonto = igv ? subtotal * IGV : 0;
-  const total    = subtotal + igvMonto;
+  const subtotal   = items.reduce((a, i) => a + calcSub(i), 0);
+  const igvMonto   = igv ? subtotal * IGV : 0;
+  const descMonto  = Math.min(Math.max(parseFloat(descuento) || 0, 0), subtotal + igvMonto);
+  const total      = subtotal + igvMonto - descMonto;
 
   const guardar = async () => {
     if (!cliente.trim()) { alert("Ingresa el nombre del cliente"); return; }
@@ -762,7 +764,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
     const ped = {
       codigo, cliente: cliente.trim(), tel,
       items: items.map(forSave),
-      subtotal, igv: igvMonto, total, con_igv: igv,
+      subtotal, igv: igvMonto, descuento: descMonto, total, con_igv: igv,
       estado: "PENDIENTE", fecha: new Date().toISOString(),
       tienda_id: tid,
     };
@@ -771,7 +773,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
     if (error) { alert("Error al guardar: " + error.message); return; }
     setPedidos(prev => [data, ...prev]);
     setSaved(data);
-    setDraft({ cliente: "", tel: "", items: [], igv: false, catAct: "Todos" });
+    setDraft({ cliente: "", tel: "", items: [], igv: false, catAct: "Todos", descuento: "" });
   };
 
   const agregarNuevo = async () => {
@@ -793,7 +795,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
   };
 
   const whatsapp = (ped) => {
-    const txt = `◈ *CREATRIX — Cotización*\n\n👤 Cliente: ${ped.cliente}\n🔖 Código: ${ped.codigo}\n\n${ped.items.map(i => `• ${i.nombre}${i.medidas ? ` (${i.ancho}×${i.alto}m)` : ""} ×${i.cantidad}: ${fM(i.sub)}`).join("\n")}\n\n${ped.con_igv ? `Subtotal: ${fM(ped.subtotal)}\nIGV 18%: ${fM(ped.igv)}\n` : ""}_TOTAL: *${fM(ped.total)}*_\n\nEstado: 🔴 PENDIENTE`;
+    const txt = `◈ *CREATRIX — Cotización*\n\n👤 Cliente: ${ped.cliente}\n🔖 Código: ${ped.codigo}\n\n${ped.items.map(i => `• ${i.nombre}${i.medidas ? ` (${i.ancho}×${i.alto}m)` : ""} ×${i.cantidad}: ${fM(i.sub)}`).join("\n")}\n\n${ped.con_igv ? `Subtotal: ${fM(ped.subtotal)}\nIGV 18%: ${fM(ped.igv)}\n` : ""}${ped.descuento > 0 ? `Descuento: -${fM(ped.descuento)}\n` : ""}_TOTAL: *${fM(ped.total)}*_\n\nEstado: 🔴 PENDIENTE`;
     window.open(`https://wa.me/${ped.tel.replace(/\D/g, "")}?text=${encodeURIComponent(txt)}`, "_blank");
   };
 
@@ -924,6 +926,20 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
                 <div className="fb mb2"><span className="fsm tm">IGV 18%</span><span className="mo fw7">{fM(igvMonto)}</span></div>
                 <div className="sep mb2" />
               </>}
+              <div className="fb mb2" style={{alignItems:"center",gap:10}}>
+                <label className="fsm tm" style={{whiteSpace:"nowrap"}}>Descuento (S/)</label>
+                <input
+                  className="inp inpsm"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  value={descuento}
+                  onChange={e=>setDescuento(e.target.value)}
+                  style={{width:110,textAlign:"right"}}
+                />
+                {descMonto>0&&<span className="mo fw7 tre" style={{fontSize:".85rem",whiteSpace:"nowrap"}}>−{fM(descMonto)}</span>}
+              </div>
+              {descMonto>0&&<div className="sep mb2"/>}
               <div className="fb">
                 <span className="fw8 gt-cyan" style={{ fontSize: "1rem" }}>TOTAL {igv ? "CON IGV" : ""}</span>
                 <span className="mo fw8 tc" style={{ fontSize: "1.2rem" }}>{fM(total)}</span>
@@ -931,7 +947,7 @@ export default function Cotizador({ catalogo, pedidos, setPedidos, setPag, tiend
             </div>
 
             <div className="r g2 mt3 je">
-              <button className="btn bg" onClick={() => setDraft(d => ({ ...d, items: [], cliente: "", tel: "" }))}>🗑 Limpiar</button>
+              <button className="btn bg" onClick={() => setDraft(d => ({ ...d, items: [], cliente: "", tel: "", descuento: "" }))}>🗑 Limpiar</button>
               <button className="btn bp blg" onClick={guardar} disabled={guardando}>{guardando?"Guardando…":"💾 Guardar Pedido"}</button>
             </div>
           </div>

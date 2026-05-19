@@ -34,7 +34,7 @@ export default function App() {
   const [productosCustom, setProductosCustom] = useState([]);
   const [reportes, setReportes] = useState([]);
   const [histFiltros, setHistFiltros] = useState({ busq: "", desde: "", hasta: "" });
-  const [cotDraft, setCotDraft] = useState({ cliente: "", tel: "", items: [], igv: false, catAct: "Todos" });
+  const [cotDraft, setCotDraft] = useState({ cliente: "", tel: "", items: [], igv: false, catAct: "Todos", descuento: "" });
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { fM, fD } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
@@ -9,6 +9,13 @@ export default function ModalPago({pedido,pagos,setPagos,onClose}){
   const [met,setMet]=useState("efectivo");
   const [nota,setNota]=useState("");
   const [registrando,setRegistrando]=useState(false);
+  const [qrUrl,setQrUrl]=useState(null);
+
+  useEffect(()=>{
+    supabase.from('configuracion').select('valor')
+      .eq('tienda_id',pedido.tienda_id).eq('clave','qr_yape')
+      .maybeSingle().then(({data})=>{ if(data?.valor) setQrUrl(data.valor); });
+  },[]);
   const pp=pagos.filter(p=>p.pedido_id===pedido.id);
   const pg=pp.reduce((a,p)=>a+p.monto,0);
   const sd=(pedido.total||0)-pg;
@@ -48,6 +55,14 @@ export default function ModalPago({pedido,pagos,setPagos,onClose}){
               ))}
             </div>
           </div>
+          {met==="yape"&&(
+            <div style={{textAlign:"center",padding:"8px 0 14px"}}>
+              {qrUrl
+                ?<img src={qrUrl} alt="QR Yape" style={{maxWidth:200,borderRadius:12,border:"2px solid var(--border)",display:"inline-block"}}/>
+                :<div style={{color:"var(--t2)",fontSize:".82rem",padding:"10px 0"}}>📵 QR de Yape no configurado</div>
+              }
+            </div>
+          )}
           <div className="fr fr2">
             <div className="fg"><label className="lb">Monto (S/)</label><input className="inp" type="number" min="0.5" step="0.5" value={monto} onChange={e=>setMonto(e.target.value)} placeholder="0.00"/><div className="fxs td mt1">Saldo disponible: {fM(sd)}</div></div>
             <div className="fg"><label className="lb">Nota (opcional)</label><input className="inp" value={nota} onChange={e=>setNota(e.target.value)} placeholder="Adelanto, saldo, etc."/></div>

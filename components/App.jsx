@@ -12,6 +12,7 @@ import Caja from "./Caja";
 import CatalogoVista from "./CatalogoVista";
 import PreciosEdit from "./PreciosEdit";
 import Reportes from "./Reportes";
+import Gastos from "./Gastos";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -33,6 +34,7 @@ export default function App() {
   const [catalogo, setCatalogo] = useState(CATALOGO);
   const [productosCustom, setProductosCustom] = useState([]);
   const [reportes, setReportes] = useState([]);
+  const [gastos, setGastos] = useState([]);
   const [histFiltros, setHistFiltros] = useState({ busq: "", desde: "", hasta: "" });
   const [cotDraft, setCotDraft] = useState({ cliente: "", tel: "", items: [], igv: false, catAct: "Todos", descuento: "" });
   const [cargando, setCargando] = useState(true);
@@ -57,18 +59,20 @@ export default function App() {
     setCargando(true);
     const tienda = sess?.user?.user_metadata?.tienda || 'tienda1';
     const esAdmin = (sess?.user?.user_metadata?.rol || 'vendedor') === 'admin';
-    const [{ data: peds }, { data: pays }, { data: prods }, { data: reps }] = await Promise.all([
+    const [{ data: peds }, { data: pays }, { data: prods }, { data: reps }, { data: gsts }] = await Promise.all([
       supabase.from('pedidos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: false }),
       supabase.from('pagos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: true }),
       supabase.from('productos_custom').select('*').eq('tienda_id', tienda).order('created_at', { ascending: true }),
       esAdmin
         ? supabase.from('reportes_semanales').select('*').eq('tienda_id', tienda).order('semana_inicio', { ascending: false })
         : Promise.resolve({ data: [] }),
+      supabase.from('gastos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: false }),
     ]);
     if (peds)  setPedidos(peds);
     if (pays)  setPagos(pays);
     if (prods) setProductosCustom(prods);
     if (reps)  setReportes(reps);
+    if (gsts)  setGastos(gsts);
     setCargando(false);
   }
 
@@ -121,6 +125,7 @@ export default function App() {
           { id:"pedidos",   i:"📦", lbl:"Pedidos",  bx:pend||null },
           { id:"historial", i:"📋", lbl:"Historial" },
           { id:"caja",      i:"💰", lbl:"Caja"      },
+          { id:"gastos",    i:"🧾", lbl:"Gastos"    },
           ...(rol==="admin" ? [{ id:"reportes", i:"📊", lbl:"Reportes" }] : []),
         ]},
         { sec:"Catálogo", items:[
@@ -195,6 +200,7 @@ export default function App() {
         {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol}/>}
         {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos} filtros={histFiltros} setFiltros={setHistFiltros}/>}
         {pagActual==="caja"      && !esLimitada && <Caja pagos={pagos}/>}
+        {pagActual==="gastos"    && !esLimitada && <Gastos gastos={gastos} setGastos={setGastos} tienda={tienda} rol={rol}/>}
         {pagActual==="catalogo"  && <CatalogoVista catalogo={catalogoCompleto}/>}
         {pagActual==="precios"   && rol==="admin" && !esLimitada && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo} productosCustom={productosCustom} setProductosCustom={setProductosCustom} tienda={tienda}/>}
         {pagActual==="reportes"  && rol==="admin" && !esLimitada && <Reportes reportes={reportes} setReportes={setReportes} tienda={tienda} pedidos={pedidos} pagos={pagos}/>}

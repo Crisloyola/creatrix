@@ -3,15 +3,18 @@
 import { useState } from "react";
 import { fM, fD, fH } from "@/lib/utils";
 
-export default function Caja({pagos}){
+export default function Caja({pagos, gastos=[]}){
   const [fecha,setFecha]=useState(""); const [met,setMet]=useState("TODOS");
   const lista=[...pagos].sort((a,b)=>b.id-a.id).filter(p=>{
     const ok1=!fecha||p.fecha.startsWith(fecha);
     const ok2=met==="TODOS"||p.metodo===met;
     return ok1&&ok2;
   });
+  const gastosLista=[...gastos].filter(g=>!fecha||g.fecha.startsWith(fecha));
   const byM=(m)=>lista.filter(p=>p.metodo===m).reduce((a,p)=>a+p.monto,0);
-  const total=lista.reduce((a,p)=>a+p.monto,0);
+  const totalIngresos=lista.reduce((a,p)=>a+p.monto,0);
+  const totalGastos=gastosLista.reduce((a,g)=>a+g.monto,0);
+  const total=totalIngresos-totalGastos;
   return(
     <div className="pg">
       <div className="pg-hd">
@@ -24,10 +27,12 @@ export default function Caja({pagos}){
           <div key={m.l} className="cjc"><div className="cji">{m.i}</div><div className="cjn">{m.l}</div><div className="cjt" style={{color:m.c}}>{fM(m.v)}</div></div>
         ))}
       </div>
-      <div className="card mb3"><div className="cb" style={{textAlign:"center"}}>
-        <div className="ctit">Total Ingresado</div>
-        <div className="mo fw8 tc" style={{fontSize:"2rem"}}>{fM(total)}</div>
-        <div className="fxs td mt1">{lista.length} transaccion{lista.length!==1?"es":""}</div>
+      <div className="card mb3"><div className="cb">
+        <div className="fb mb2"><span className="ctit" style={{margin:0}}>Ingresos</span><span className="mo fw8 tgr" style={{fontSize:"1.3rem"}}>{fM(totalIngresos)}</span></div>
+        <div className="fb mb2"><span className="fsm td">Gastos</span><span className="mo fw7 tre" style={{fontSize:"1.1rem"}}>−{fM(totalGastos)}</span></div>
+        <div className="sep mb2"/>
+        <div className="fb"><span className="fw8 gt-cyan" style={{fontSize:"1rem"}}>NETO EN CAJA</span><span className="mo fw8 tc" style={{fontSize:"1.6rem"}}>{fM(total)}</span></div>
+        <div className="fxs td mt1" style={{textAlign:"right"}}>{lista.length} cobro{lista.length!==1?"s":""} · {gastosLista.length} gasto{gastosLista.length!==1?"s":""}</div>
       </div></div>
       <div className="r g2 mb3">
         {["TODOS","efectivo","yape","transferencia"].map(m=>(

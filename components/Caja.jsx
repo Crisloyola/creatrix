@@ -3,28 +3,54 @@
 import { useState } from "react";
 import { fM, fD, fH } from "@/lib/utils";
 
-export default function Caja({pagos, gastos=[]}){
+const lunesDeEstaSemana=()=>{
+  const hoy=new Date();
+  const dia=hoy.getDay();
+  const diff=dia===0?-6:1-dia;
+  const lunes=new Date(hoy);
+  lunes.setDate(hoy.getDate()+diff);
+  lunes.setHours(0,0,0,0);
+  return lunes.toISOString();
+};
+
+export default function Caja({pagos, gastos=[], tienda}){
   const [fecha,setFecha]=useState(""); const [met,setMet]=useState("TODOS");
+  const semanaInicio = tienda==="tienda1" ? lunesDeEstaSemana() : null;
   const lista=[...pagos].sort((a,b)=>b.id-a.id).filter(p=>{
+    const ok0=!semanaInicio||p.fecha>=semanaInicio;
     const ok1=!fecha||p.fecha.startsWith(fecha);
     const ok2=met==="TODOS"||p.metodo===met;
-    return ok1&&ok2;
+    return ok0&&ok1&&ok2;
   });
-  const gastosLista=[...gastos].filter(g=>!fecha||g.fecha.startsWith(fecha));
-  const byM=(m)=>lista.filter(p=>p.metodo===m).reduce((a,p)=>a+p.monto,0);
+  const gastosLista=[...gastos].filter(g=>{
+    const ok0=!semanaInicio||g.fecha>=semanaInicio;
+    const ok1=!fecha||g.fecha.startsWith(fecha);
+    return ok0&&ok1;
+  });
+  const ingresoM=(m)=>lista.filter(p=>p.metodo===m).reduce((a,p)=>a+p.monto,0);
+  const gastoM  =(m)=>gastosLista.filter(g=>g.metodo===m).reduce((a,g)=>a+g.monto,0);
+  const byM     =(m)=>ingresoM(m)-gastoM(m);
   const totalIngresos=lista.reduce((a,p)=>a+p.monto,0);
   const totalGastos=gastosLista.reduce((a,g)=>a+g.monto,0);
   const total=totalIngresos-totalGastos;
   return(
     <div className="pg">
       <div className="pg-hd">
-        <div><h2 className="gt-cyan">💰 Caja</h2><p>Registro de ingresos por método de pago</p></div>
+        <div>
+          <h2 className="gt-cyan">💰 Caja</h2>
+          <p>{semanaInicio ? `Semana actual (desde el lunes ${fD(semanaInicio)})` : "Registro de ingresos por método de pago"}</p>
+        </div>
         <input type="date" className="inp inpsm" style={{width:"auto"}} value={fecha} onChange={e=>setFecha(e.target.value)}/>
       </div>
       <div className="glow-line"/>
       <div className="cjm">
-        {[{i:"💵",l:"Efectivo",v:byM("efectivo"),c:"var(--gr)"},{i:"📱",l:"Yape",v:byM("yape"),c:"#a78bfa"},{i:"🏦",l:"Transferencia",v:byM("transferencia"),c:"var(--bl)"}].map(m=>(
-          <div key={m.l} className="cjc"><div className="cji">{m.i}</div><div className="cjn">{m.l}</div><div className="cjt" style={{color:m.c}}>{fM(m.v)}</div></div>
+        {[{i:"💵",l:"Efectivo",k:"efectivo",c:"var(--gr)"},{i:"📱",l:"Yape",k:"yape",c:"#a78bfa"},{i:"🏦",l:"Transferencia",k:"transferencia",c:"var(--bl)"}].map(m=>(
+          <div key={m.l} className="cjc">
+            <div className="cji">{m.i}</div>
+            <div className="cjn">{m.l}</div>
+            <div className="cjt" style={{color:m.c}}>{fM(byM(m.k))}</div>
+            {gastoM(m.k)>0&&<div className="fxs td" style={{marginTop:4}}>Gastos: −{fM(gastoM(m.k))}</div>}
+          </div>
         ))}
       </div>
       <div className="card mb3"><div className="cb">

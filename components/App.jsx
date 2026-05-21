@@ -197,9 +197,9 @@ export default function App() {
       <main className="main">
         {pagActual==="dashboard" && <Dashboard pedidos={pedidos} pagos={pagos} catalogo={catalogo} setPag={setPag}/>}
         {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda} draft={cotDraft} setDraft={setCotDraft} setProductosCustom={setProductosCustom}/>}
-        {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol}/>}
+        {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol} tienda={tienda}/>}
         {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos} filtros={histFiltros} setFiltros={setHistFiltros}/>}
-        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagos} gastos={gastos}/>}
+        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagos} gastos={gastos} tienda={tienda}/>}
         {pagActual==="gastos"    && !esLimitada && <Gastos gastos={gastos} setGastos={setGastos} tienda={tienda} rol={rol}/>}
         {pagActual==="catalogo"  && <CatalogoVista catalogo={catalogoCompleto}/>}
         {pagActual==="precios"   && rol==="admin" && !esLimitada && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo} productosCustom={productosCustom} setProductosCustom={setProductosCustom} tienda={tienda}/>}

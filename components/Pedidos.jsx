@@ -13,7 +13,7 @@ const wa = (p) => {
   window.open(`https://wa.me/${(p.tel||"").replace(/\D/g,"")}?text=${encodeURIComponent(txt)}`,"_blank");
 };
 
-export default function Pedidos({pedidos,setPedidos,pagos,setPagos,rol}){
+export default function Pedidos({pedidos,setPedidos,pagos,setPagos,rol,tienda}){
   const [busq,setBusq]=useState("");
   const [fil,setFil]=useState("TODOS");
   const [pagoMd,setPagoMd]=useState(null);

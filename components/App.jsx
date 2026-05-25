@@ -84,9 +84,9 @@ export default function App() {
       supabase.from('pagos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: true }),
       supabase.from('productos_custom').select('*').eq('tienda_id', tienda).order('created_at', { ascending: true }),
       esAdmin
-        // Admin: carga todos los reportes completos para la sección de Cierres
+        // Admin: carga reportes completos para ver la sección de Cierres
         ? supabase.from('reportes_semanales').select('*').eq('tienda_id', tienda).order('semana_inicio', { ascending: false })
-        // Vendedor: solo necesita la fecha del último cierre para filtrar el dashboard
+        // Vendedor: solo necesita la fecha del último cierre para filtrar su dashboard
         : supabase.from('reportes_semanales').select('semana_fin').eq('tienda_id', tienda).order('semana_fin', { ascending: false }).limit(1),
       supabase.from('gastos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: false }),
     ]);
@@ -136,6 +136,9 @@ export default function App() {
   const pagosDash = esVendedorTienda1 && ultimoCierre
     ? pagos.filter(p => p.fecha > ultimoCierre + 'T23:59:59')
     : pagos;
+  const gastosDash = esVendedorTienda1 && ultimoCierre
+    ? gastos.filter(g => g.fecha > ultimoCierre + 'T23:59:59')
+    : gastos;
 
   const catalogoCustom = productosCustom.map(p => ({
     id: p.id, nombre: p.nombre, tipo: "custom", icon: "📦",
@@ -235,7 +238,7 @@ export default function App() {
         {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda} draft={cotDraft} setDraft={setCotDraft} setProductosCustom={setProductosCustom}/>}
         {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol} tienda={tienda}/>}
         {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos} filtros={histFiltros} setFiltros={setHistFiltros}/>}
-        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagosDash} gastos={gastos} tienda={tienda}/>}
+        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagosDash} gastos={gastosDash} tienda={tienda}/>}
         {pagActual==="gastos"    && !esLimitada && <Gastos gastos={gastos} setGastos={setGastos} tienda={tienda} rol={rol}/>}
         {pagActual==="catalogo"  && <CatalogoVista catalogo={catalogoCompleto}/>}
         {pagActual==="precios"   && rol==="admin" && !esLimitada && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo} productosCustom={productosCustom} setProductosCustom={setProductosCustom} tienda={tienda}/>}

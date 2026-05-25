@@ -118,41 +118,53 @@ export default function Reportes({ reportes, setReportes, tienda, pedidos, pagos
       [data, ...prev.filter(r => r.semana_inicio !== data.semana_inicio)]
         .sort((a, b) => b.semana_inicio.localeCompare(a.semana_inicio))
     );
+    alert("✅ Semana cerrada correctamente.\n\n📊 Reporte guardado con los datos de esta semana.\n🔄 Dashboard y Caja reiniciados en S/ 0.\n📋 Historial conserva todos los pedidos anteriores.");
   };
 
   return (
     <div className="pg">
       <div className="pg-hd">
         <div>
-          <h2 className="gt-cyan">📊 Reportes Semanales</h2>
-          <p>{reportes.length} reporte{reportes.length !== 1 ? "s" : ""} guardados</p>
+          <h2 className="gt-cyan">📊 Cierres Semanales</h2>
+          <p>{reportes.length} cierre{reportes.length !== 1 ? "s" : ""} guardados</p>
         </div>
         <div className="r g2">
           <button className="btn bg" onClick={vistaPrevia}>👁 Vista previa</button>
-          <button className="btn bp" onClick={generarAhora} disabled={generando}>
-            {generando ? "Guardando…" : "💾 Guardar semana actual"}
+          <button className="btn bm blg" onClick={generarAhora} disabled={generando}>
+            {generando ? "Cerrando…" : "🔄 Cerrar Semana Actual"}
           </button>
         </div>
       </div>
       <div className="glow-line" />
 
+      <div style={{background:"rgba(0,229,204,.06)",border:"1px solid rgba(0,229,204,.18)",borderRadius:10,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"flex-start",gap:10,fontSize:".78rem",color:"var(--t2)"}}>
+        <span style={{fontSize:"1.1rem",flexShrink:0}}>💡</span>
+        <div>
+          <b style={{color:"var(--t)"}}>¿Cómo funciona el cierre semanal?</b><br/>
+          Al cerrar la semana se guarda un reporte con todos los datos actuales.
+          El <b style={{color:"var(--t)"}}>Dashboard</b> y la <b style={{color:"var(--t)"}}>Caja</b> arrancan en <b style={{color:"var(--cyan)"}}>S/ 0</b> para la nueva semana.
+          El <b style={{color:"var(--t)"}}>Historial</b> y <b style={{color:"var(--t)"}}>Pedidos</b> siguen mostrando todos los datos anteriores sin cambios.
+        </div>
+      </div>
+
       {reportes.length === 0 ? (
         <div className="em" style={{ marginTop: 60 }}>
-          <div className="em-i">📊</div>
-          <div className="em-t">Sin reportes aún</div>
-          <div className="em-s">Se generan automáticamente cada domingo o usa el botón para generar el reporte de la semana actual</div>
+          <div className="em-i">🗓</div>
+          <div className="em-t">Sin cierres registrados aún</div>
+          <div className="fxs td mt1">Usa <b>"Cerrar Semana Actual"</b> al finalizar cada semana para guardar el reporte y reiniciar el dashboard en 0</div>
         </div>
       ) : (
         <div className="tw">
           <table>
             <thead>
-              <tr><th>Período</th><th>Pedidos</th><th>Total ventas</th><th>Cobrado</th><th>Saldo</th><th>Generado</th><th>Acciones</th></tr>
+              <tr><th>#</th><th>Período</th><th>Pedidos</th><th>Total ventas</th><th>Cobrado</th><th>Saldo</th><th>Fecha cierre</th><th>Acciones</th></tr>
             </thead>
             <tbody>
-              {reportes.map(r => {
+              {reportes.map((r, idx) => {
                 const saldo = (r.total_ventas || 0) - (r.total_pagado || 0);
                 return (
                   <tr key={r.id}>
+                    <td><span className="bge bgc">#{reportes.length - idx}</span></td>
                     <td>
                       <div className="fw7">{fD(r.semana_inicio)}</div>
                       <div className="fxs td">→ {fD(r.semana_fin)}</div>

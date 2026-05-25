@@ -437,6 +437,20 @@ tbody tr:hover td { background:rgba(0,229,204,.02) }
 .neon-cyan { box-shadow:0 0 16px rgba(0,229,204,.15) }
 .neon-mag  { box-shadow:0 0 16px rgba(204,0,255,.15) }
 
+/* ── CIERRES SEMANALES ── */
+.cierre-card { transition:.2s }
+.cierre-card:hover { border-color:var(--border2) }
+
+/* ── ADMIN BADGE ── */
+.sb-item.admin-item.on {
+  color:var(--mag); font-weight:600;
+  background:linear-gradient(90deg, var(--mag-d), transparent);
+  box-shadow: inset 3px 0 0 var(--mag);
+}
+.sb-item.admin-item.on::before {
+  background:linear-gradient(to bottom, var(--mag), var(--pur));
+}
+
 @media(max-width:860px){
   .sb { display:none }
   .pg { padding:14px }
@@ -453,10 +467,52 @@ export default function App() {
   const [pedidos, setPedidos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [catalogo, setCatalogo] = useState(CATALOGO);
+  const [reportes, setReportes] = useState([]);
+  const [pedidosArch, setPedidosArch] = useState([]);
+  const [pagosArch, setPagosArch] = useState([]);
 
   if (!session) return <><style>{CSS}</style><Login onLogin={setSession}/></>;
 
   const pend = pedidos.filter(p => p.estado==="PENDIENTE").length;
+
+  const cerrarSemana = () => {
+    if (!pedidos.length && !pagos.length) { alert("No hay datos que cerrar esta semana."); return; }
+    const totalVentas = pedidos.reduce((a,p)=>a+(p.total||0),0);
+    const totalCobrado = pagos.reduce((a,p)=>a+p.monto,0);
+    if (!window.confirm(
+      `¿Cerrar semana actual?\n\n` +
+      `📦 Pedidos: ${pedidos.length}\n` +
+      `💹 Total ventas: S/ ${totalVentas.toFixed(2)}\n` +
+      `💰 Total cobrado: S/ ${totalCobrado.toFixed(2)}\n\n` +
+      `El dashboard y la caja se reiniciarán en 0.\nEl historial seguirá mostrando todos los pedidos.`
+    )) return;
+    const now = new Date();
+    const primerFecha = pedidos.length
+      ? pedidos.reduce((min,p)=>p.fecha<min?p.fecha:min, pedidos[0].fecha)
+      : now.toISOString();
+    const reporte = {
+      id: Date.now(),
+      fechaCierre: now.toISOString(),
+      desde: primerFecha,
+      hasta: now.toISOString(),
+      pedidos: [...pedidos],
+      pagos: [...pagos],
+      resumen: {
+        totalPedidos: pedidos.length,
+        totalVentas,
+        totalCobrado,
+        efectivo: pagos.filter(p=>p.metodo==="efectivo").reduce((a,p)=>a+p.monto,0),
+        yape: pagos.filter(p=>p.metodo==="yape").reduce((a,p)=>a+p.monto,0),
+        transferencia: pagos.filter(p=>p.metodo==="transferencia").reduce((a,p)=>a+p.monto,0),
+      }
+    };
+    setReportes(prev=>[reporte,...prev]);
+    setPedidosArch(prev=>[...prev,...pedidos]);
+    setPagosArch(prev=>[...prev,...pagos]);
+    setPedidos([]);
+    setPagos([]);
+    alert("✅ Semana cerrada correctamente. El reporte ha sido guardado.");
+  };
 
   const nav = [
     { sec:"Principal", items:[
@@ -472,6 +528,9 @@ export default function App() {
       { id:"catalogo",i:"🗂️", lbl:"Ver Catálogo" },
       { id:"precios", i:"⚙️", lbl:"Gestión Precios" },
     ]},
+    ...(session.rol==="admin" ? [{ sec:"Admin", items:[
+      { id:"cierres", i:"🗓", lbl:"Cierres Semanales", bx:reportes.length||null },
+    ]}] : []),
   ];
 
   return (
@@ -521,13 +580,14 @@ export default function App() {
 
         {/* MAIN */}
         <main className="main">
-          {pag==="dashboard" && <Dashboard pedidos={pedidos} pagos={pagos} catalogo={catalogo} setPag={setPag}/>}
+          {pag==="dashboard" && <Dashboard pedidos={pedidos} pagos={pagos} catalogo={catalogo} setPag={setPag} session={session} onCerrarSemana={cerrarSemana}/>}
           {pag==="cotizador" && <Cotizador catalogo={catalogo} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag}/>}
           {pag==="pedidos"   && <Pedidos  pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos}/>}
-          {pag==="historial" && <Historial pedidos={pedidos} pagos={pagos}/>}
+          {pag==="historial" && <Historial pedidos={[...pedidos,...pedidosArch]} pagos={[...pagos,...pagosArch]}/>}
           {pag==="caja"      && <Caja pagos={pagos}/>}
           {pag==="catalogo"  && <CatalogoVista catalogo={catalogo}/>}
           {pag==="precios"   && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo}/>}
+          {pag==="cierres"   && <CierresSemana reportes={reportes} onCerrar={cerrarSemana}/>}
         </main>
       </div>
     </>
@@ -574,7 +634,7 @@ function Login({ onLogin }) {
 }
 
 /* ── DASHBOARD ─────────────────────────────────────── */
-function Dashboard({pedidos,pagos,catalogo,setPag}){
+function Dashboard({pedidos,pagos,catalogo,setPag,session,onCerrarSemana}){
   const pend=pedidos.filter(p=>p.estado==="PENDIENTE");
   const done=pedidos.filter(p=>p.estado==="CANCELADO");
   const totalV=pedidos.reduce((a,p)=>a+(p.total||0),0);
@@ -590,7 +650,12 @@ function Dashboard({pedidos,pagos,catalogo,setPag}){
           <h2 className="gt-cyan">⬡ Dashboard</h2>
           <p>Bienvenido — {new Date().toLocaleDateString("es-PE",{weekday:"long",day:"numeric",month:"long"})}</p>
         </div>
-        <button className="btn bp" onClick={()=>setPag("cotizador")}>+ Nuevo Pedido</button>
+        <div className="r g2">
+          {session?.rol==="admin"&&(
+            <button className="btn bm" onClick={onCerrarSemana} title="Cierra la semana y reinicia el dashboard en 0">🗓 Cerrar Semana</button>
+          )}
+          <button className="btn bp" onClick={()=>setPag("cotizador")}>+ Nuevo Pedido</button>
+        </div>
       </div>
       <div className="glow-line"/>
 
@@ -1369,6 +1434,151 @@ function ModalPdf({pedido,pagos,onClose}){
             {pp.length>0&&<><hr className="pdf-div"/><div style={{fontSize:10,fontWeight:700,color:"#888",textTransform:"uppercase",marginBottom:6}}>Pagos registrados</div>{pp.map(p=><div key={p.id} style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}><span style={{color:"#555"}}>{p.metodo}{p.nota?" — "+p.nota:""}</span><span style={{color:"#059669",fontWeight:700}}>{fM(p.monto)}</span></div>)}</>}
             <div className="pdf-ft">¡Gracias por su preferencia! — <b>creatrix</b> Diseño & Publicidad</div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── CIERRES SEMANALES (admin only) ────────────────── */
+function CierresSemana({reportes,onCerrar}){
+  const [detalle,setDetalle]=useState(null);
+  return(
+    <div className="pg">
+      <div className="pg-hd">
+        <div>
+          <h2 className="gt-cyan">🗓 Cierres Semanales</h2>
+          <p>{reportes.length} cierre{reportes.length!==1?"s":""} registrado{reportes.length!==1?"s":""}</p>
+        </div>
+        <button className="btn bm blg" onClick={onCerrar}>🔄 Cerrar Semana Actual</button>
+      </div>
+      <div className="glow-line"/>
+
+      <div style={{background:"var(--cyan-d2)",border:"1px solid rgba(0,229,204,.15)",borderRadius:10,padding:"11px 16px",marginBottom:20,fontSize:".78rem",color:"var(--t2)",display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:"1.1rem"}}>💡</span>
+        <span>Al cerrar la semana, el <b style={{color:"var(--t)"}}>dashboard</b> y la <b style={{color:"var(--t)"}}>caja</b> se reinician en <b style={{color:"var(--cyan)"}}>S/ 0</b>. El <b style={{color:"var(--t)"}}>historial</b> seguirá mostrando todos los pedidos anteriores.</span>
+      </div>
+
+      {reportes.length===0?(
+        <div className="em">
+          <div className="em-i">🗓</div>
+          <div className="em-t">Sin cierres registrados aún</div>
+          <div className="fxs td mt1">Usa el botón <b>"Cerrar Semana Actual"</b> al finalizar cada semana</div>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          {reportes.map((r,idx)=>(
+            <div key={r.id} className="card">
+              <div className="cb">
+                <div className="fb mb3">
+                  <div>
+                    <div className="r g2 mb1">
+                      <span className="bge bgc">Cierre #{reportes.length-idx}</span>
+                      <span className="fw7 fsm">{fD(r.fechaCierre)}</span>
+                      <span className="fxs td">{fH(r.fechaCierre)}</span>
+                    </div>
+                    <div className="fxs td">Período: {fD(r.desde)} → {fD(r.hasta)}</div>
+                  </div>
+                  <button className="btn bcyan bsm" onClick={()=>setDetalle(r)}>📊 Ver detalle</button>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:10}}>
+                  {[
+                    {l:"Pedidos",         v:r.resumen.totalPedidos, c:"var(--cyan)", i:"📦", mono:false},
+                    {l:"Total Ventas",    v:fM(r.resumen.totalVentas), c:"var(--gr)",   i:"💹", mono:true},
+                    {l:"Total Cobrado",   v:fM(r.resumen.totalCobrado), c:"#a78bfa",     i:"💰", mono:true},
+                    {l:"Saldo Pendiente", v:fM(r.resumen.totalVentas-r.resumen.totalCobrado), c:"var(--ye)", i:"🔔", mono:true},
+                  ].map(s=>(
+                    <div key={s.l} style={{background:"var(--bg2)",borderRadius:10,padding:"13px 14px",border:"1px solid var(--border)"}}>
+                      <div style={{fontSize:"1.1rem",marginBottom:5}}>{s.i}</div>
+                      <div className={`fw8${s.mono?" mo":""}`} style={{color:s.c,fontSize:".95rem"}}>{s.v}</div>
+                      <div className="fxs td mt1">{s.l}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  {[
+                    {l:"💵 Efectivo",v:r.resumen.efectivo},
+                    {l:"📱 Yape",    v:r.resumen.yape},
+                    {l:"🏦 Transferencia",v:r.resumen.transferencia},
+                  ].map(m=>(
+                    <div key={m.l} style={{flex:1,background:"var(--bg3)",borderRadius:8,padding:"8px 12px",border:"1px solid var(--border)"}}>
+                      <span className="fxs td">{m.l}: </span>
+                      <span className="mo fw7 tgr">{fM(m.v)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {detalle&&<ModalReporte reporte={detalle} onClose={()=>setDetalle(null)}/>}
+    </div>
+  );
+}
+
+/* ── MODAL REPORTE SEMANAL ─────────────────────────── */
+function ModalReporte({reporte,onClose}){
+  const saldo=reporte.resumen.totalVentas-reporte.resumen.totalCobrado;
+  return(
+    <div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="md mdlg">
+        <div className="mh">
+          <h3>📊 Reporte Semanal — {fD(reporte.fechaCierre)}</h3>
+          <button className="cx" onClick={onClose}>✕</button>
+        </div>
+        <div className="mb">
+          <div className="fxs td mb3">Período: {fD(reporte.desde)} → {fD(reporte.hasta)} · Cerrado el {fD(reporte.fechaCierre)} a las {fH(reporte.fechaCierre)}</div>
+          <div className="sts sts4 mb3">
+            {[
+              {lbl:"Pedidos",      val:reporte.resumen.totalPedidos,        i:"📦", c:"var(--cyan)"},
+              {lbl:"Total Ventas", val:fM(reporte.resumen.totalVentas),     i:"💹", c:"var(--gr)"},
+              {lbl:"Cobrado",      val:fM(reporte.resumen.totalCobrado),    i:"💰", c:"#a78bfa"},
+              {lbl:"Saldo",        val:fM(saldo),                           i:"🔔", c:saldo>0?"var(--ye)":"var(--gr)"},
+            ].map(s=>(
+              <div className="sc" key={s.lbl}>
+                <div className="sg" style={{background:s.c}}/>
+                <div className="si">{s.i}</div>
+                <div className="sv" style={{color:s.c,fontSize:typeof s.val==="string"?"1.05rem":"1.4rem"}}>{s.val}</div>
+                <div className="sl">{s.lbl}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:20}}>
+            {[
+              {l:"💵 Efectivo",v:reporte.resumen.efectivo,c:"var(--gr)"},
+              {l:"📱 Yape",    v:reporte.resumen.yape,    c:"#a78bfa"},
+              {l:"🏦 Transferencia",v:reporte.resumen.transferencia,c:"var(--bl)"},
+            ].map(m=>(
+              <div key={m.l} className="card"><div className="cb" style={{textAlign:"center",padding:"14px"}}>
+                <div className="fxs td mb1">{m.l}</div>
+                <div className="mo fw8" style={{color:m.c,fontSize:"1.05rem"}}>{fM(m.v)}</div>
+              </div></div>
+            ))}
+          </div>
+          <div className="ctit">Pedidos del período</div>
+          <div className="tw">
+            <table>
+              <thead><tr><th>Código</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Fecha</th></tr></thead>
+              <tbody>
+                {reporte.pedidos.length===0?(
+                  <tr><td colSpan={5} style={{padding:24,textAlign:"center"}}><span className="td">Sin pedidos en este período</span></td></tr>
+                ):reporte.pedidos.map(p=>(
+                  <tr key={p.id}>
+                    <td><span className="code">{p.codigo}</span></td>
+                    <td className="fw7">{p.cliente}</td>
+                    <td><span className="mo fw7 tc">{fM(p.total)}</span></td>
+                    <td><span className={`bge ${p.estado==="PENDIENTE"?"bgp":"bgd"}`}>{p.estado==="PENDIENTE"?"🔴":"🟢"} {p.estado}</span></td>
+                    <td className="fxs td">{fD(p.fecha)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="mf">
+          <button className="btn bg" onClick={onClose}>Cerrar</button>
         </div>
       </div>
     </div>

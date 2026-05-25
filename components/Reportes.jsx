@@ -58,7 +58,7 @@ function imprimirReporte(r) {
   setTimeout(() => w.print(), 300);
 }
 
-export default function Reportes({ reportes, setReportes, tienda, pedidos, pagos }) {
+export default function Reportes({ reportes, setReportes, tienda, pedidos, pagos, onCierre }) {
   const [generando, setGenerando] = useState(false);
 
   const vistaPrevia = () => {
@@ -118,7 +118,8 @@ export default function Reportes({ reportes, setReportes, tienda, pedidos, pagos
       [data, ...prev.filter(r => r.semana_inicio !== data.semana_inicio)]
         .sort((a, b) => b.semana_inicio.localeCompare(a.semana_inicio))
     );
-    alert("✅ Semana cerrada correctamente.\n\n📊 Reporte guardado con los datos de esta semana.\n🔄 Dashboard y Caja reiniciados en S/ 0.\n📋 Historial conserva todos los pedidos anteriores.");
+    alert("✅ Semana cerrada correctamente.\n\n📊 Reporte guardado.\n🔄 Dashboard y Caja reiniciados en S/ 0.\n📋 Historial conserva todos los registros.");
+    if (onCierre) onCierre(); // recarga datos y navega al dashboard
   };
 
   return (

@@ -56,6 +56,25 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // ── Realtime: cuando el admin cierra la semana, todos se actualizan ──
+  useEffect(() => {
+    if (!session) return;
+    const tiendaId = session.user?.user_metadata?.tienda || 'tienda1';
+
+    const canal = supabase
+      .channel(`cierre_semana_${tiendaId}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'reportes_semanales', filter: `tienda_id=eq.${tiendaId}` },
+        () => {
+          // El admin cerró la semana → recargar datos para todos los usuarios
+          cargarDatos(session);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(canal); };
+  }, [session]);
+
   async function cargarDatos(sess) {
     setCargando(true);
     const tienda = sess?.user?.user_metadata?.tienda || 'tienda1';
@@ -65,8 +84,10 @@ export default function App() {
       supabase.from('pagos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: true }),
       supabase.from('productos_custom').select('*').eq('tienda_id', tienda).order('created_at', { ascending: true }),
       esAdmin
+        // Admin: carga todos los reportes completos para la sección de Cierres
         ? supabase.from('reportes_semanales').select('*').eq('tienda_id', tienda).order('semana_inicio', { ascending: false })
-        : Promise.resolve({ data: [] }),
+        // Vendedor: solo necesita la fecha del último cierre para filtrar el dashboard
+        : supabase.from('reportes_semanales').select('semana_fin').eq('tienda_id', tienda).order('semana_fin', { ascending: false }).limit(1),
       supabase.from('gastos').select('*').eq('tienda_id', tienda).order('fecha', { ascending: false }),
     ]);
     if (peds)  setPedidos(peds);
@@ -260,7 +281,7 @@ export default function App() {
         {pagActual==="gastos"    && !esLimitada && <Gastos gastos={gastos} setGastos={setGastos} tienda={tienda} rol={rol}/>}
         {pagActual==="catalogo"  && <CatalogoVista catalogo={catalogoCompleto}/>}
         {pagActual==="precios"   && rol==="admin" && !esLimitada && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo} productosCustom={productosCustom} setProductosCustom={setProductosCustom} tienda={tienda}/>}
-        {pagActual==="reportes"  && rol==="admin" && !esLimitada && <Reportes reportes={reportes} setReportes={setReportes} tienda={tienda} pedidos={pedidos} pagos={pagos}/>}
+        {pagActual==="reportes"  && rol==="admin" && !esLimitada && <Reportes reportes={reportes} setReportes={setReportes} tienda={tienda} pedidos={pedidos} pagos={pagos} onCierre={()=>{ cargarDatos(session); setPag("dashboard"); }}/>}
       </main>
     </div>
   );

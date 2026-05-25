@@ -124,31 +124,18 @@ export default function App() {
   const pend = pedidos.filter(p => p.estado === "PENDIENTE").length;
 
   // ── Cierre Semanal ──────────────────────────────────────────
-  // Último cierre = semana_fin del reporte más reciente guardado.
-  // Dashboard y Caja solo ven datos POST-cierre (arrancan en 0).
-  // Historial recibe todos los datos sin filtrar (nunca pierde nada).
+  // Admin → siempre ve TODOS los datos (sin filtrar)
+  // Vendedor tienda1 → ve solo datos después del último cierre (arranca en 0)
   const ultimoCierre = reportes.length > 0
     ? [...reportes].sort((a, b) => b.semana_fin.localeCompare(a.semana_fin))[0].semana_fin
     : null;
-  const pedidosActuales = ultimoCierre
+  const esVendedorTienda1 = rol !== "admin" && tienda === "tienda1";
+  const pedidosDash = esVendedorTienda1 && ultimoCierre
     ? pedidos.filter(p => p.fecha > ultimoCierre + 'T23:59:59')
     : pedidos;
-  const pagosActuales = ultimoCierre
+  const pagosDash = esVendedorTienda1 && ultimoCierre
     ? pagos.filter(p => p.fecha > ultimoCierre + 'T23:59:59')
     : pagos;
-
-  // ── Aviso nueva semana (solo admin) ─────────────────────────
-  // Detecta si hay datos sin cerrar de una semana anterior.
-  const hayDatosSinCerrar = ultimoCierre
-    ? new Date() > new Date(ultimoCierre + 'T23:59:59')
-    : false;
-  const dismissKey = `aviso_cierre_${ultimoCierre}`;
-  const yaDescartado = typeof window !== "undefined" && localStorage.getItem(dismissKey) === new Date().toDateString();
-  const mostrarAviso = rol === "admin" && hayDatosSinCerrar && avisoCierre && !yaDescartado;
-  const descartarAviso = () => {
-    if (typeof window !== "undefined") localStorage.setItem(dismissKey, new Date().toDateString());
-    setAvisoCierre(false);
-  };
 
   const catalogoCustom = productosCustom.map(p => ({
     id: p.id, nombre: p.nombre, tipo: "custom", icon: "📦",
@@ -244,40 +231,11 @@ export default function App() {
       </aside>
 
       <main className="main">
-        {/* ── Aviso cierre semanal ── */}
-        {mostrarAviso && (
-          <div style={{
-            background:"linear-gradient(135deg, rgba(204,0,255,.12), rgba(124,58,237,.1))",
-            border:"1px solid rgba(204,0,255,.3)",
-            borderRadius:12, margin:"16px 20px 0",
-            padding:"12px 18px", display:"flex", alignItems:"center",
-            gap:12, flexWrap:"wrap",
-          }}>
-            <span style={{fontSize:"1.2rem"}}>🗓</span>
-            <div style={{flex:1, minWidth:200}}>
-              <div style={{fontWeight:700, fontSize:".85rem", color:"var(--t)"}}>
-                ¡Hay una semana pendiente de cerrar!
-              </div>
-              <div style={{fontSize:".73rem", color:"var(--t2)", marginTop:2}}>
-                Último cierre: <b>{ultimoCierre}</b> — Guarda el reporte y reinicia el dashboard en 0.
-              </div>
-            </div>
-            <div style={{display:"flex", gap:8, flexShrink:0}}>
-              <button className="btn bm bsm" onClick={()=>{ descartarAviso(); setPag("reportes"); }}>
-                🔄 Cerrar semana ahora
-              </button>
-              <button className="btn bg bsm" onClick={descartarAviso}>
-                Más tarde
-              </button>
-            </div>
-          </div>
-        )}
-
-        {pagActual==="dashboard" && <Dashboard pedidos={pedidosActuales} pagos={pagosActuales} catalogo={catalogo} setPag={setPag} rol={rol} ultimoCierre={ultimoCierre}/>}
+        {pagActual==="dashboard" && <Dashboard pedidos={pedidosDash} pagos={pagosDash} catalogo={catalogo} setPag={setPag} rol={rol}/>}
         {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda} draft={cotDraft} setDraft={setCotDraft} setProductosCustom={setProductosCustom}/>}
         {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol} tienda={tienda}/>}
         {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos} filtros={histFiltros} setFiltros={setHistFiltros}/>}
-        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagosActuales} todosPagos={pagos} gastos={gastos} tienda={tienda}/>}
+        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagosDash} gastos={gastos} tienda={tienda}/>}
         {pagActual==="gastos"    && !esLimitada && <Gastos gastos={gastos} setGastos={setGastos} tienda={tienda} rol={rol}/>}
         {pagActual==="catalogo"  && <CatalogoVista catalogo={catalogoCompleto}/>}
         {pagActual==="precios"   && rol==="admin" && !esLimitada && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo} productosCustom={productosCustom} setProductosCustom={setProductosCustom} tienda={tienda}/>}

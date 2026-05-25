@@ -3,7 +3,7 @@
 import { fM } from "@/lib/utils";
 import { CATALOGO } from "@/lib/constants";
 
-export default function Dashboard({pedidos,pagos,catalogo,setPag,rol,ultimoCierre}){
+export default function Dashboard({pedidos,pagos,catalogo,setPag,rol}){
   const pend=pedidos.filter(p=>p.estado==="PENDIENTE");
   const done=pedidos.filter(p=>p.estado==="CANCELADO");
   const totalV=pedidos.reduce((a,p)=>a+(p.total||0),0);
@@ -18,7 +18,6 @@ export default function Dashboard({pedidos,pagos,catalogo,setPag,rol,ultimoCierr
         <div>
           <h2 className="gt-cyan">⬡ Dashboard</h2>
           <p>Bienvenido — {new Date().toLocaleDateString("es-PE",{weekday:"long",day:"numeric",month:"long"})}</p>
-          {ultimoCierre&&<p style={{fontSize:".68rem",color:"var(--t3)",marginTop:2}}>📅 Semana desde: {new Date(ultimoCierre+"T00:00:00").toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"})}</p>}
         </div>
         <div className="r g2">
           {rol==="admin"&&(

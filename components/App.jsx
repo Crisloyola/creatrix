@@ -124,19 +124,18 @@ export default function App() {
   const pend = pedidos.filter(p => p.estado === "PENDIENTE").length;
 
   // ── Cierre Semanal ──────────────────────────────────────────
-  // Admin → siempre ve TODOS los datos (sin filtrar)
-  // Vendedor tienda1 → ve solo datos después del último cierre (arranca en 0)
+  // Dashboard y Caja arrancan en 0 tras el último cierre, para todos los
+  // roles y tiendas. Historial y Pedidos siempre muestran todo sin filtrar.
   const ultimoCierre = reportes.length > 0
     ? [...reportes].sort((a, b) => b.semana_fin.localeCompare(a.semana_fin))[0].semana_fin
     : null;
-  const esVendedorTienda1 = rol !== "admin" && tienda === "tienda1";
-  const pedidosDash = esVendedorTienda1 && ultimoCierre
+  const pedidosDash = ultimoCierre
     ? pedidos.filter(p => p.fecha > ultimoCierre + 'T23:59:59')
     : pedidos;
-  const pagosDash = esVendedorTienda1 && ultimoCierre
+  const pagosDash = ultimoCierre
     ? pagos.filter(p => p.fecha > ultimoCierre + 'T23:59:59')
     : pagos;
-  const gastosDash = esVendedorTienda1 && ultimoCierre
+  const gastosDash = ultimoCierre
     ? gastos.filter(g => g.fecha > ultimoCierre + 'T23:59:59')
     : gastos;
 

@@ -135,6 +135,10 @@ export default function App() {
   const pagosDash = ultimoCierre
     ? pagos.filter(p => p.fecha > ultimoCierre + 'T23:59:59')
     : pagos;
+  // Caja: muestra todo el histórico, salvo tienda2 que solo arranca desde junio 2026.
+  const cajaDesde = tienda === 'tienda2' ? '2026-06-01' : null;
+  const pagosCaja  = cajaDesde ? pagos.filter(p => p.fecha >= cajaDesde)   : pagos;
+  const gastosCaja = cajaDesde ? gastos.filter(g => g.fecha >= cajaDesde) : gastos;
   const gastosDash = ultimoCierre
     ? gastos.filter(g => g.fecha > ultimoCierre + 'T23:59:59')
     : gastos;
@@ -237,7 +241,7 @@ export default function App() {
         {pagActual==="cotizador" && <Cotizador catalogo={catalogoCompleto} pedidos={pedidos} setPedidos={setPedidos} setPag={setPag} tienda={tienda} draft={cotDraft} setDraft={setCotDraft} setProductosCustom={setProductosCustom}/>}
         {pagActual==="pedidos"   && !esLimitada && <Pedidos pedidos={pedidos} setPedidos={setPedidos} pagos={pagos} setPagos={setPagos} rol={rol} tienda={tienda}/>}
         {pagActual==="historial" && <Historial pedidos={pedidos} pagos={pagos} filtros={histFiltros} setFiltros={setHistFiltros}/>}
-        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagos} gastos={gastos} tienda={tienda}/>}
+        {pagActual==="caja"      && !esLimitada && <Caja pagos={pagosCaja} gastos={gastosCaja} tienda={tienda}/>}
         {pagActual==="gastos"    && !esLimitada && <Gastos gastos={gastos} setGastos={setGastos} tienda={tienda} rol={rol}/>}
         {pagActual==="catalogo"  && <CatalogoVista catalogo={catalogoCompleto}/>}
         {pagActual==="precios"   && rol==="admin" && !esLimitada && <PreciosEdit catalogo={catalogo} setCatalogo={setCatalogo} productosCustom={productosCustom} setProductosCustom={setProductosCustom} tienda={tienda}/>}

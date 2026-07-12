@@ -135,9 +135,9 @@ export default function App() {
   const pagosDash = ultimoCierre
     ? pagos.filter(p => p.fecha > ultimoCierre + 'T23:59:59')
     : pagos;
-  // Caja: muestra todo el histórico, salvo el vendedor de tienda2 que solo ve desde junio 2026.
+  // Caja: muestra todo el histórico, salvo el vendedor de tienda2 que solo ve desde julio 2026.
   // El admin de tienda2 (y el resto de tiendas/roles) siempre ve el historial completo.
-  const cajaDesde = (tienda === 'tienda2' && rol !== 'admin') ? '2026-06-01' : null;
+  const cajaDesde = (tienda === 'tienda2' && rol !== 'admin') ? '2026-07-01' : null;
   const pagosCaja  = cajaDesde ? pagos.filter(p => p.fecha >= cajaDesde)   : pagos;
   const gastosCaja = cajaDesde ? gastos.filter(g => g.fecha >= cajaDesde) : gastos;
   const gastosDash = ultimoCierre
